@@ -1,0 +1,756 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Düzenli Alım Hesaplayıcı · Değerin Korunumu</title>
+<meta name="description" content="S&P 500, Nasdaq 100, çip şirketleri, altın ve Bitcoin'e her ay aynı tutarı yatırsaydınız ne olurdu? Son 15 yılın aylık fiyatlarıyla düzenli alım (DCA) hesaplayıcı.">
+<meta name="theme-color" content="#1b3a6b">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="canonical" href="https://degerinkorunumu.pages.dev/araclar/dca">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Düzenli alım (DCA) hesaplayıcı · Değerin Korunumu">
+<meta property="og:description" content="Her ay aynı tutarla alım yapsaydınız bugün ne kadarınız olurdu? S&P 500, Nasdaq 100, çip şirketleri, altın ve Bitcoin.">
+<meta property="og:url" content="https://degerinkorunumu.pages.dev/araclar/dca">
+<meta property="og:image" content="https://degerinkorunumu.pages.dev/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="tr_TR">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;800&family=Inter:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="/stil.css">
+<style>
+/* Varlık renkleri kimliğe bağlı; filtre değişince boyanmaz. Açık ve koyu adımlar ayrı doğrulandı. */
+:root {
+  --s-qqq: #2a78d6; --s-bitcoin: #eb6834; --s-voo: #1baf7a; --s-altin: #eda100; --s-smh: #e87ba4;
+  --pozitif: #006300; --negatif: #c62f2f;
+  --izgara: #e6e9ef; --eksen: #c7cdd8; --soluk: #6b7487;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --s-qqq: #3987e5; --s-bitcoin: #d95926; --s-voo: #199e70; --s-altin: #c98500; --s-smh: #d55181;
+    --pozitif: #2bb52b; --negatif: #ef6b6b;
+    --izgara: #222c3d; --eksen: #34425a; --soluk: #8b95a8;
+  }
+}
+:root[data-theme="dark"] {
+  --s-qqq: #3987e5; --s-bitcoin: #d95926; --s-voo: #199e70; --s-altin: #c98500; --s-smh: #d55181;
+  --pozitif: #2bb52b; --negatif: #ef6b6b;
+  --izgara: #222c3d; --eksen: #34425a; --soluk: #8b95a8;
+}
+
+.ust { padding: 40px 0 8px; }
+.ust h1 { font-size: clamp(32px, 6vw, 52px); }
+.ust p { margin-top: 14px; max-width: 64ch; color: var(--ink2); }
+
+.arac { padding: 24px 0 56px; }
+
+/* Kontroller */
+.kontroller { display: flex; flex-wrap: wrap; gap: 20px 32px; align-items: flex-end; }
+.alan { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.alan.genis { flex-basis: 100%; }
+.etk, .alan > label { font-size: 13px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; color: var(--ink2); }
+.tutar-kutu { display: flex; align-items: center; border: 1.5px solid var(--line); border-radius: 10px; background: var(--bg); padding: 0 12px; width: 150px; }
+.tutar-kutu:focus-within { border-color: var(--accent); }
+.tutar-kutu span { color: var(--ink2); font-weight: 700; }
+.tutar-kutu input { border: 0; background: transparent; color: var(--ink); font: 700 18px Inter, sans-serif; padding: 9px 8px; width: 100%; outline: none; }
+.ikili { display: flex; gap: 6px; }
+select {
+  font: 500 15px Inter, sans-serif; color: var(--ink); background: var(--bg);
+  border: 1.5px solid var(--line); border-radius: 10px; padding: 9px 10px; cursor: pointer;
+}
+select:focus-visible, .secim button:focus-visible, .grafik svg:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.secim { display: flex; flex-wrap: wrap; gap: 8px; }
+.secim button {
+  font: 600 14px Inter, sans-serif; color: var(--ink2); background: var(--bg);
+  border: 1.5px solid var(--line); border-radius: 999px; padding: 8px 14px; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.secim button:hover { color: var(--ink); }
+.secim button[aria-pressed="true"] { color: var(--ink); border-color: var(--ink2); background: var(--surface); }
+.secim.donem button[aria-pressed="true"], .secim.olcek button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.secim .anahtar { width: 14px; height: 4px; border-radius: 2px; flex: none; }
+.secim button[aria-pressed="false"] .anahtar { opacity: .3; }
+.secim button[aria-pressed="false"] .ad { text-decoration: line-through; text-decoration-color: var(--soluk); }
+.secim.kucuk button { padding: 6px 12px; font-size: 13px; }
+
+.ozet { margin: 20px 2px 0; color: var(--ink2); font-size: 15px; }
+.ozet b { color: var(--ink); }
+
+/* Grafik */
+.grafik-kart { margin-top: 16px; padding: 20px 20px 12px; }
+.grafik-bas { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; }
+.grafik-bas h2 { font-size: 20px; }
+.grafik { position: relative; margin-top: 8px; }
+.grafik svg { display: block; width: 100%; touch-action: pan-y; }
+.grafik .izgara-c { stroke: var(--izgara); stroke-width: 1; }
+.grafik .eksen-c { stroke: var(--eksen); stroke-width: 1; }
+.grafik text { fill: var(--soluk); font: 500 12px Inter, sans-serif; }
+.grafik text.uc-etiket { fill: var(--ink2); font-weight: 700; font-size: 12.5px; }
+.grafik .seri { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.grafik .yatan { fill: none; stroke: var(--soluk); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.grafik .imlec { stroke: var(--ink2); stroke-width: 1; opacity: .5; }
+.grafik .nokta { stroke: var(--surface); stroke-width: 2; }
+.ipucu {
+  position: absolute; top: 8px; pointer-events: none; min-width: 190px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(10, 20, 40, .14); padding: 10px 12px; font-size: 13px;
+}
+.ipucu .ip-baslik { font-weight: 700; color: var(--ink2); margin-bottom: 6px; }
+.ipucu .ip-satir { display: grid; grid-template-columns: 14px auto 1fr; gap: 8px; align-items: center; line-height: 1.7; }
+.ipucu .ip-satir b { color: var(--ink); font-variant-numeric: tabular-nums; text-align: right; }
+.ipucu .ip-satir span:last-child { color: var(--ink2); }
+.ipucu .ip-cizgi { height: 3px; border-radius: 2px; }
+.ipucu .ip-cizgi.kesik { background: repeating-linear-gradient(90deg, var(--soluk) 0 4px, transparent 4px 7px); }
+.grafik-not { font-size: 13px; color: var(--soluk); margin-top: 6px; }
+
+/* Sonuçlar */
+.ara-baslik { font-size: 24px; margin-top: 40px; }
+.sonuclar { margin-top: 16px; display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+.sonuc { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 18px 16px; position: relative; overflow: hidden; }
+.sonuc::before { content: ""; position: absolute; left: 0; top: 0; right: 0; height: 4px; background: var(--renk); }
+.sonuc .bas { display: flex; align-items: baseline; gap: 8px; }
+.sonuc .bas b { font-family: Manrope, Inter, sans-serif; font-weight: 800; font-size: 17px; }
+.sonuc .bas span { color: var(--soluk); font-size: 13px; font-weight: 700; }
+.sonuc .deger { margin-top: 10px; font-family: Manrope, Inter, sans-serif; font-weight: 800; font-size: 30px; letter-spacing: -0.02em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.sonuc .kazanc { margin-top: 4px; font-weight: 700; font-size: 15px; font-variant-numeric: tabular-nums; }
+.arti { color: var(--pozitif); }
+.eksi { color: var(--negatif); }
+.sonuc dl { margin-top: 14px; display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 14px; border-top: 1px solid var(--line); padding-top: 12px; }
+.sonuc dt { color: var(--soluk); }
+.sonuc dd { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.sonuc .not { margin-top: 10px; font-size: 13px; color: var(--soluk); line-height: 1.5; }
+.sonuc.bos .deger { font-size: 18px; color: var(--soluk); }
+.uyari { margin-top: 18px; font-size: 14px; color: var(--ink2); }
+
+details.tablo { margin-top: 24px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+details.tablo summary { cursor: pointer; padding: 14px 18px; font-weight: 700; font-size: 15px; }
+.tablo-kap { overflow-x: auto; padding: 0 18px 16px; }
+.tablo table { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; }
+.tablo th, .tablo td { padding: 7px 10px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--line); }
+.tablo th:first-child, .tablo td:first-child { text-align: left; }
+.tablo th { color: var(--ink2); font-weight: 700; font-size: 13px; }
+
+.notlar { margin-top: 18px; padding-left: 20px; max-width: 72ch; color: var(--ink2); font-size: 16px; }
+.notlar li + li { margin-top: 10px; }
+.hata { padding: 24px; color: var(--negatif); }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="isaret" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="50" fill="#1b3a6b"/>
+      <text x="50" y="61" text-anchor="middle" font-family="Inter, sans-serif" font-weight="700" font-size="32" fill="#ffffff">Δ<tspan dx="2">=</tspan><tspan dx="2" fill="#d4a23a">0</tspan></text>
+    </symbol>
+  </defs>
+</svg>
+
+<header>
+  <div class="kap">
+    <a class="marka" href="/" aria-label="Değerin Korunumu ana sayfa">
+      <svg width="40" height="40" aria-hidden="true"><use href="#isaret"/></svg>
+      Değerin Korunumu
+    </a>
+    <nav class="menu">
+      <a class="ust-link" href="/araclar/dca" aria-current="page">DCA <span class="uzun">hesaplayıcı</span></a>
+      <a class="ust-link" href="https://www.youtube.com/@degerinkorunumu" aria-label="YouTube kanalı"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M23 7.2a3 3 0 0 0-2.1-2.1C19 4.6 12 4.6 12 4.6s-7 0-8.9.5A3 3 0 0 0 1 7.2 31 31 0 0 0 .5 12 31 31 0 0 0 1 16.8a3 3 0 0 0 2.1 2.1c1.9.5 8.9.5 8.9.5s7 0 8.9-.5a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .5-4.8 31 31 0 0 0-.5-4.8ZM9.7 15.1V8.9l5.8 3.1-5.8 3.1Z"/></svg><span class="uzun">@degerinkorunumu</span></a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="ust">
+    <div class="kap">
+      <h1>Düzenli alım hesaplayıcı</h1>
+      <p>Fiyatın yüksek mi düşük mü olduğuna bakmadan her ay aynı tutarla alım yapmaya düzenli alım, kısaca DCA deniyor. Aylık tutarı ve dönemi seçin; son 15 yılın fiyatlarıyla bu alımların dönem sonunda ne kadar ettiğini görün.</p>
+    </div>
+  </section>
+
+  <section class="arac">
+    <div class="kap">
+      <div class="kart kontroller">
+        <div class="alan">
+          <label for="tutar">Aylık tutar</label>
+          <div class="tutar-kutu"><span>$</span><input id="tutar" type="number" min="1" max="1000000" step="any" inputmode="decimal" value="100"></div>
+        </div>
+        <div class="alan">
+          <label for="bas-ay">Başlangıç</label>
+          <div class="ikili"><select id="bas-ay"></select><select id="bas-yil" aria-label="Başlangıç yılı"></select></div>
+        </div>
+        <div class="alan">
+          <label for="bit-ay">Bitiş</label>
+          <div class="ikili"><select id="bit-ay"></select><select id="bit-yil" aria-label="Bitiş yılı"></select></div>
+        </div>
+        <div class="alan genis">
+          <span class="etk" id="donem-etk">Hızlı seçim: son</span>
+          <div class="secim donem" id="hazir" role="group" aria-labelledby="donem-etk"></div>
+        </div>
+        <div class="alan genis">
+          <span class="etk" id="varlik-etk">Varlıklar</span>
+          <div class="secim" id="varliklar" role="group" aria-labelledby="varlik-etk"></div>
+        </div>
+      </div>
+
+      <p class="ozet" id="ozet" aria-live="polite"></p>
+
+      <div class="kart grafik-kart">
+        <div class="grafik-bas">
+          <h2>Birikimin değeri</h2>
+          <div class="secim olcek kucuk" id="olcek" role="group" aria-label="Grafik ölçeği">
+            <button type="button" data-o="dogrusal">Doğrusal</button>
+            <button type="button" data-o="log">Logaritmik</button>
+          </div>
+        </div>
+        <div class="grafik" id="grafik">
+          <div class="ipucu" id="ipucu" hidden></div>
+        </div>
+        <p class="grafik-not" id="grafik-not"></p>
+      </div>
+
+      <h2 class="ara-baslik">Dönem sonunda</h2>
+      <div class="sonuclar" id="sonuclar"></div>
+      <p class="uyari">Bunlar geçmişin rakamları. Geçmişte kazandıran bir varlığın gelecekte de aynı şekilde kazandıracağının garantisi yok.</p>
+
+      <details class="tablo">
+        <summary>Yıllara göre değerler (tablo)</summary>
+        <div class="tablo-kap"><table id="tablo"></table></div>
+      </details>
+    </div>
+  </section>
+
+  <section class="bolum">
+    <div class="kap">
+      <h2>Hesap nasıl yapılıyor?</h2>
+      <ul class="notlar">
+        <li>Alım, her ayın ilk işlem günündeki kapanış fiyatından yapılıyor. Başlangıç ve bitiş ayı da dahil, seçilen her ay için bir alım var.</li>
+        <li>Birikimin değeri dönemin sonundaki fiyatla hesaplanıyor. Bitiş olarak son ayı seçtiyseniz son kapanış fiyatı kullanılıyor, daha eski bir ay seçtiyseniz bir sonraki ayın ilk işlem günü.</li>
+        <li>VOO, QQQ ve SMH fonlarının dağıttığı temettüler aynı fona yeniden yatırılmış sayılıyor. Altında ons fiyatı (vadeli kontrat; spot fiyata çok yakın), Bitcoin'de dolar fiyatı kullanılıyor. Bitcoin verisi Ekim 2014'ten başlıyor, daha önceki aylar için Bitcoin'e alım yapılmıyor.</li>
+        <li>Komisyon, alım-satım farkı ve vergi hesaba katılmadı. Fonların yıllık yönetim gideri fiyatın içinde zaten var.</li>
+        <li>Bütün tutarlar dolar cinsinden. Lirayla düzenli alım yapan birinin sonucu, o dönemde kurun nasıl gittiğine göre farklı çıkar.</li>
+        <li>Yıllık getiri, her ay farklı bir tarihte para yatırıldığı için iç verim oranıyla hesaplanıyor; bir yıldan kısa dönemlerde gösterilmiyor. "En kötü an", birikimin o ana kadar yatırılan paraya göre en çok gerilediği ay başı.</li>
+        <li>SMH yalnızca çip şirketlerinden oluşuyor, Bitcoin ise tek bir varlık. Böyle dar sepetlerde hem kazanç hem düşüş, geniş endekslere göre çok daha sert oluyor.</li>
+        <li id="kaynak">Veri: Yahoo Finance.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="kap">
+    <div>Kanaldaki ve bu sitedeki içerikler eğitim amaçlıdır, yatırım tavsiyesi değildir.</div>
+    <div class="delta">Δ = <b>0</b></div>
+  </div>
+</footer>
+
+<script>
+(() => {
+'use strict';
+
+const AYLAR = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+const KISA = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+const GRAM = 31.1035;
+const YIL_MS = 365.25 * 864e5;
+const HAZIR = [1, 3, 5, 10, 15];
+
+const nf = (o) => new Intl.NumberFormat('tr-TR', o);
+const f0 = nf({ style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+const f2 = nf({ style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const f0s = nf({ style: 'currency', currency: 'USD', maximumFractionDigits: 0, signDisplay: 'exceptZero' });
+const fKs = nf({ maximumFractionDigits: 1 });
+const fK = { format: (v) => v >= 1e6 ? '$' + fKs.format(v / 1e6) + ' mn' : v >= 1e3 ? '$' + fKs.format(v / 1e3) + ' bin' : '$' + fKs.format(v) };
+const fY1 = nf({ style: 'percent', maximumFractionDigits: 1, signDisplay: 'exceptZero' });
+const fY0 = nf({ style: 'percent', maximumFractionDigits: 0, signDisplay: 'exceptZero' });
+const para = (n) => (Math.abs(n) >= 100 ? f0 : f2).format(n);
+const yuzde = (n) => (Math.abs(n) >= 10 ? fY0 : fY1).format(n);
+const sayi = (n, d) => nf({ maximumFractionDigits: d }).format(n);
+
+const $ = (s) => document.querySelector(s);
+const SVG = 'http://www.w3.org/2000/svg';
+function el(tag, cls, metin) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (metin != null) e.textContent = metin;
+  return e;
+}
+function sv(tag, attr, ebeveyn) {
+  const e = document.createElementNS(SVG, tag);
+  for (const k in attr) e.setAttribute(k, attr[k]);
+  if (ebeveyn) ebeveyn.appendChild(e);
+  return e;
+}
+
+let V, Y0, M0, SON, durum, grafikDurum = null;
+
+// Ay sırası (0 = verinin ilk ayı) ↔ yıl/ay
+const ayYM = (i) => { const t = Y0 * 12 + (M0 - 1) + i; return [Math.floor(t / 12), (t % 12) + 1]; };
+const ayIdx = (y, m) => y * 12 + (m - 1) - (Y0 * 12 + (M0 - 1));
+const ayEtiket = (i, kisa) => { const [y, m] = ayYM(i); return (kisa ? KISA : AYLAR)[m - 1] + ' ' + y; };
+const gunTarih = (i, gun) => { const [y, m] = ayYM(i); return Date.UTC(y, m - 1, gun); };
+const isoTarih = (s) => Date.parse(s + 'T00:00:00Z');
+const tarihMetin = (ms) => { const d = new Date(ms); return d.getUTCDate() + ' ' + AYLAR[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); };
+const tarihX = (ms) => { const d = new Date(ms); return ayIdx(d.getUTCFullYear(), d.getUTCMonth() + 1) + (d.getUTCDate() - 1) / 30.4; };
+
+// ---------- Hesap ----------
+function irr(akis, tutar, sonMs, deger) {
+  // deger = Σ tutar·(1+r)^(yıl farkı) denkleminin kökü; sağ taraf r ile artar, kök tek.
+  const t = akis.map((ms) => (sonMs - ms) / YIL_MS);
+  const g = (r) => deger - t.reduce((s, ti) => s + tutar * Math.pow(1 + r, ti), 0);
+  let lo = -0.99, hi = 1;
+  while (g(hi) > 0 && hi < 1e4) hi *= 2;
+  for (let k = 0; k < 200; k++) {
+    const mid = (lo + hi) / 2;
+    if (g(mid) > 0) lo = mid; else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+
+function hesapla(a) {
+  const ilk = Math.max(durum.bas, a.bas);
+  if (ilk > durum.bit) return { a, yok: true };
+  const T = durum.tutar;
+  let adet = 0, yatan = 0, enKotu = null;
+  const seri = new Map(), akis = [];
+  for (let i = ilk; i <= durum.bit; i++) {
+    const k = i - a.bas, f = a.fiyat[k];
+    adet += T / f;
+    yatan += T;
+    const d = adet * f;
+    seri.set(i, d);
+    const o = d / yatan - 1;
+    if (!enKotu || o < enKotu.oran) enKotu = { oran: o, i };
+    akis.push(gunTarih(i, a.gun[k]));
+  }
+  let sonFiyat, sonMs;
+  if (durum.bit === SON) { sonFiyat = a.son.fiyat; sonMs = isoTarih(a.son.tarih); }
+  else { const k = durum.bit + 1 - a.bas; sonFiyat = a.fiyat[k]; sonMs = gunTarih(durum.bit + 1, a.gun[k]); }
+  const deger = adet * sonFiyat;
+  const oran = deger / yatan - 1;
+  const sure = (sonMs - akis[0]) / YIL_MS;
+  return {
+    a, ilk, ay: durum.bit - ilk + 1, adet, yatan, deger, kar: deger - yatan, oran,
+    yillik: sure >= 1 ? irr(akis, T, sonMs, deger) : null,
+    enKotu, seri, sonMs,
+  };
+}
+
+// ---------- Kontroller ----------
+function kontrolleriKur() {
+  const [ySon] = ayYM(SON);
+  for (const id of ['bas', 'bit']) {
+    const ay = $('#' + id + '-ay'), yil = $('#' + id + '-yil');
+    AYLAR.forEach((ad, k) => ay.add(new Option(ad, k + 1)));
+    for (let y = Y0; y <= ySon; y++) yil.add(new Option(y, y));
+    const degisti = () => {
+      const i = Math.min(SON, Math.max(0, ayIdx(+yil.value, +ay.value)));
+      durum[id] = i;
+      if (durum.bas > durum.bit) { if (id === 'bas') durum.bit = durum.bas; else durum.bas = durum.bit; }
+      ciz();
+    };
+    ay.addEventListener('change', degisti);
+    yil.addEventListener('change', degisti);
+  }
+
+  const hazir = $('#hazir');
+  for (const n of HAZIR) {
+    const b = el('button', null, n + ' yıl');
+    b.type = 'button';
+    b.dataset.yil = n;
+    b.setAttribute('aria-label', 'Son ' + n + ' yıl');
+    b.addEventListener('click', () => { durum.bit = SON; durum.bas = Math.max(0, SON - 12 * n + 1); ciz(); });
+    hazir.appendChild(b);
+  }
+
+  const vk = $('#varliklar');
+  for (const a of V.varliklar) {
+    const b = el('button');
+    b.type = 'button';
+    b.dataset.id = a.id;
+    const anahtar = el('span', 'anahtar');
+    anahtar.style.background = 'var(--s-' + a.id + ')';
+    b.append(anahtar, el('span', 'ad', a.ad + ' (' + a.kod + ')'));
+    b.addEventListener('click', () => {
+      if (durum.secili.has(a.id)) { if (durum.secili.size > 1) durum.secili.delete(a.id); }
+      else durum.secili.add(a.id);
+      ciz();
+    });
+    vk.appendChild(b);
+  }
+
+  $('#olcek').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (b) { durum.olcek = b.dataset.o; ciz(); }
+  });
+
+  const tutar = $('#tutar');
+  tutar.value = durum.tutar;
+  tutar.addEventListener('input', () => {
+    const v = parseFloat(tutar.value.replace(',', '.'));
+    if (v > 0 && v <= 1e6) { durum.tutar = v; ciz(); }
+  });
+}
+
+function kontrolleriGuncelle() {
+  for (const id of ['bas', 'bit']) {
+    const [y, m] = ayYM(durum[id]);
+    $('#' + id + '-ay').value = m;
+    $('#' + id + '-yil').value = y;
+  }
+  for (const b of document.querySelectorAll('#hazir button')) {
+    const n = +b.dataset.yil;
+    b.setAttribute('aria-pressed', durum.bit === SON && durum.bas === Math.max(0, SON - 12 * n + 1));
+  }
+  for (const b of document.querySelectorAll('#varliklar button')) b.setAttribute('aria-pressed', durum.secili.has(b.dataset.id));
+  for (const b of document.querySelectorAll('#olcek button')) b.setAttribute('aria-pressed', durum.olcek === b.dataset.o);
+}
+
+// Adres çubuğu: hesap paylaşılabilsin (?tutar=100&bas=2016-12&bit=2026-11&varlik=voo,qqq&olcek=log)
+function urlOku() {
+  const p = new URLSearchParams(location.search);
+  const ay = (s) => { const m = /^(\d{4})-(\d{2})$/.exec(s || ''); return m ? Math.min(SON, Math.max(0, ayIdx(+m[1], +m[2]))) : null; };
+  const t = parseFloat(p.get('tutar'));
+  if (t > 0 && t <= 1e6) durum.tutar = t;
+  const b = ay(p.get('bas')), e = ay(p.get('bit'));
+  if (b != null) durum.bas = b;
+  if (e != null) durum.bit = e;
+  if (durum.bas > durum.bit) durum.bas = durum.bit;
+  const ids = (p.get('varlik') || '').split(',').filter((id) => V.varliklar.some((a) => a.id === id));
+  if (ids.length) durum.secili = new Set(ids);
+  if (p.get('olcek') === 'log') durum.olcek = 'log';
+}
+function urlYaz() {
+  const ym = (i) => { const [y, m] = ayYM(i); return y + '-' + String(m).padStart(2, '0'); };
+  const p = new URLSearchParams();
+  p.set('tutar', durum.tutar);
+  p.set('bas', ym(durum.bas));
+  p.set('bit', ym(durum.bit));
+  if (durum.secili.size < V.varliklar.length) p.set('varlik', V.varliklar.filter((a) => durum.secili.has(a.id)).map((a) => a.id).join(','));
+  if (durum.olcek === 'log') p.set('olcek', 'log');
+  try { history.replaceState(null, '', '?' + p.toString()); } catch (e) { /* yerel dosyada olmayabilir */ }
+}
+
+// ---------- Çizim ----------
+function ciz() {
+  kontrolleriGuncelle();
+  const hepsi = V.varliklar.filter((a) => durum.secili.has(a.id)).map(hesapla);
+  const var_ = hepsi.filter((s) => !s.yok);
+  ozetYaz(var_);
+  grafikDurum = var_.length ? grafikVerisi(var_) : null;
+  grafikCiz();
+  sonuclariYaz(hepsi);
+  tabloYaz();
+  urlYaz();
+}
+
+function ozetYaz(sonuclar) {
+  const oz = $('#ozet');
+  oz.textContent = '';
+  if (!sonuclar.length) { oz.textContent = 'Seçilen varlıklar için bu dönemde veri yok.'; return; }
+  const ilk = Math.min(...sonuclar.map((s) => s.ilk));
+  const n = durum.bit - ilk + 1;
+  const degerleme = durum.bit === SON
+    ? 'Değerler ' + tarihMetin(isoTarih(V.guncelleme)) + ' itibarıyla son kapanış fiyatlarıyla.'
+    : 'Değerler dönemin sonundaki, yani ' + ayEtiket(durum.bit + 1) + ' başındaki fiyatlarla.';
+  oz.append(
+    ayEtiket(ilk) + ' – ' + ayEtiket(durum.bit) + ' arasında her ay ',
+    el('b', null, para(durum.tutar)),
+    ': ' + n + ' ay, toplam ',
+    el('b', null, para(durum.tutar * n)),
+    '. ' + degerleme,
+  );
+}
+
+function grafikVerisi(sonuclar) {
+  const ilk = Math.min(...sonuclar.map((s) => s.ilk));
+  let xSon;
+  if (durum.bit === SON) xSon = Math.max(durum.bit + 0.25, ...sonuclar.map((s) => tarihX(s.sonMs)));
+  else xSon = durum.bit + 1;
+  const noktalar = [];
+  for (let i = ilk; i <= durum.bit; i++) noktalar.push({ x: i, i, yatan: durum.tutar * (i - ilk + 1) });
+  noktalar.push({ x: xSon, son: true, yatan: durum.tutar * (durum.bit - ilk + 1), ms: Math.max(...sonuclar.map((s) => s.sonMs)) });
+  const deger = (s, n) => (n.son ? s.deger : s.seri.get(n.i));
+  return { sonuclar, ilk, xSon, noktalar, deger, aktif: null };
+}
+
+function niceAdim(ham) {
+  const us = Math.pow(10, Math.floor(Math.log10(ham)));
+  const k = ham / us;
+  return (k <= 1 ? 1 : k <= 2 ? 2 : k <= 2.5 ? 2.5 : k <= 5 ? 5 : 10) * us;
+}
+
+function grafikCiz() {
+  const kap = $('#grafik');
+  const ipucu = $('#ipucu');
+  kap.querySelector('svg')?.remove();
+  ipucu.hidden = true;
+  const G = grafikDurum;
+  $('#grafik-not').textContent = '';
+  if (!G) return;
+
+  const W = kap.clientWidth;
+  const dar = W < 560;
+  const H = dar ? 300 : 380;
+  const m = { l: dar ? 50 : 62, r: dar ? 14 : 128, t: 14, b: 30 };
+  const iw = W - m.l - m.r, ih = H - m.t - m.b;
+  const log = durum.olcek === 'log';
+
+  let enAz = Infinity, enCok = 0;
+  for (const n of G.noktalar) {
+    enAz = Math.min(enAz, n.yatan); enCok = Math.max(enCok, n.yatan);
+    for (const s of G.sonuclar) { const d = G.deger(s, n); if (d != null) { enAz = Math.min(enAz, d); enCok = Math.max(enCok, d); } }
+  }
+
+  let y, tikler;
+  if (log) {
+    const lo = enAz * 0.85, hi = enCok * 1.15;
+    const L = (v) => Math.log10(v);
+    y = (v) => m.t + ih - (L(v) - L(lo)) / (L(hi) - L(lo)) * ih;
+    const d0 = Math.floor(L(lo)), d1 = Math.ceil(L(hi));
+    const carpan = d1 - d0 <= 2 ? [1, 2, 5] : d1 - d0 <= 4 ? [1, 3] : [1];
+    tikler = [];
+    for (let d = d0; d <= d1; d++) for (const k of carpan) { const v = k * Math.pow(10, d); if (v >= lo && v <= hi) tikler.push(v); }
+  } else {
+    const adim = niceAdim(enCok / (dar ? 4 : 5));
+    const ust = Math.ceil(enCok * 1.04 / adim) * adim;
+    y = (v) => m.t + ih - (v / ust) * ih;
+    tikler = [];
+    for (let v = 0; v <= ust + 1e-9; v += adim) tikler.push(v);
+  }
+  const x = (v) => m.l + (v - G.ilk) / (G.xSon - G.ilk) * iw;
+
+  const svg = sv('svg', { width: W, height: H, viewBox: `0 0 ${W} ${H}`, tabindex: 0, role: 'img',
+    'aria-label': 'Seçilen varlıklarda düzenli alımın aylık değeri. Değerleri okumak için ok tuşlarını kullanın; aynı rakamlar aşağıdaki tabloda da var.' });
+
+  // Izgara ve y ekseni
+  for (const v of tikler) {
+    const yy = Math.round(y(v)) + 0.5;
+    sv('line', { x1: m.l, x2: W - m.r, y1: yy, y2: yy, class: v === 0 ? 'eksen-c' : 'izgara-c' }, svg);
+    const t = sv('text', { x: m.l - 8, y: yy + 4, 'text-anchor': 'end' }, svg);
+    t.textContent = v === 0 ? '0' : fK.format(v);
+  }
+  if (log) sv('line', { x1: m.l, x2: W - m.r, y1: m.t + ih + 0.5, y2: m.t + ih + 0.5, class: 'eksen-c' }, svg);
+
+  // x ekseni: kısa dönemde çeyrekler, uzunda yıllar
+  const aySayisi = durum.bit - G.ilk + 1;
+  const sigan = Math.max(2, Math.floor(iw / (dar ? 56 : 72)));
+  const xt = [];
+  if (aySayisi <= 30) {
+    for (let i = G.ilk; i <= durum.bit; i++) if ((ayYM(i)[1] - 1) % 3 === 0) xt.push({ i, metin: KISA[ayYM(i)[1] - 1] + ' ' + String(ayYM(i)[0]).slice(2) });
+  } else {
+    const yillar = [];
+    for (let i = G.ilk; i <= durum.bit; i++) if (ayYM(i)[1] === 1) yillar.push(i);
+    const atla = Math.ceil(yillar.length / sigan);
+    yillar.forEach((i, k) => { if (k % atla === 0) xt.push({ i, metin: String(ayYM(i)[0]) }); });
+  }
+  let ayrilir = xt;
+  if (xt.length > sigan) { const atla = Math.ceil(xt.length / sigan); ayrilir = xt.filter((_, k) => k % atla === 0); }
+  for (const t of ayrilir) {
+    const xx = x(t.i);
+    sv('line', { x1: xx, x2: xx, y1: m.t + ih, y2: m.t + ih + 5, class: 'eksen-c' }, svg);
+    const e = sv('text', { x: xx, y: H - 8, 'text-anchor': 'middle' }, svg);
+    e.textContent = t.metin;
+  }
+
+  // Yatırılan (kesik çizgi) ve seriler
+  const yol = (pts) => pts.map((p, k) => (k ? 'L' : 'M') + x(p[0]).toFixed(1) + ' ' + y(p[1]).toFixed(1)).join(' ');
+  sv('path', { d: yol(G.noktalar.map((n) => [n.x, n.yatan])), class: 'yatan' }, svg);
+  for (const s of G.sonuclar) {
+    const pts = [];
+    for (const n of G.noktalar) { const d = G.deger(s, n); if (d != null) pts.push([n.x, d]); }
+    const p = sv('path', { d: yol(pts), class: 'seri' }, svg);
+    p.style.stroke = 'var(--s-' + s.a.id + ')';
+  }
+
+  // Uç etiketleri (geniş ekranda): sırala, üst üste binmesin
+  const son = G.noktalar[G.noktalar.length - 1];
+  if (!dar) {
+    const etk = G.sonuclar.map((s) => ({ ad: s.a.ad, y: y(s.deger), id: s.a.id }));
+    etk.push({ ad: 'Yatırılan', y: y(son.yatan), id: null });
+    etk.sort((a, b) => a.y - b.y);
+    for (let k = 1; k < etk.length; k++) etk[k].ty = Math.max(etk[k].y, (etk[k - 1].ty ?? etk[k - 1].y) + 16);
+    etk[0].ty = etk[0].y;
+    const tasma = etk[etk.length - 1].ty - (m.t + ih);
+    if (tasma > 0) for (const e of etk) e.ty -= tasma;
+    for (let k = etk.length - 2; k >= 0; k--) etk[k].ty = Math.min(etk[k].ty, etk[k + 1].ty - 16);
+    const xx = x(son.x);
+    for (const e of etk) {
+      if (e.id) {
+        const c = sv('circle', { cx: xx, cy: e.y, r: 4, class: 'nokta' }, svg);
+        c.style.fill = 'var(--s-' + e.id + ')';
+      }
+      const t = sv('text', { x: xx + 10, y: e.ty + 4, class: 'uc-etiket' }, svg);
+      t.textContent = e.ad;
+    }
+  }
+
+  // İmleç
+  const imlec = sv('line', { y1: m.t, y2: m.t + ih, class: 'imlec', visibility: 'hidden' }, svg);
+  const noktaG = sv('g', { visibility: 'hidden' }, svg);
+  const noktalar = G.sonuclar.map((s) => { const c = sv('circle', { r: 4.5, class: 'nokta' }, noktaG); c.style.fill = 'var(--s-' + s.a.id + ')'; return c; });
+  sv('rect', { x: m.l, y: m.t, width: iw + (dar ? 0 : 12), height: ih, fill: 'transparent' }, svg);
+
+  function goster(k) {
+    G.aktif = k;
+    const n = G.noktalar[k], xx = x(n.x);
+    imlec.setAttribute('x1', xx); imlec.setAttribute('x2', xx);
+    imlec.setAttribute('visibility', 'visible');
+    noktaG.setAttribute('visibility', 'visible');
+    const satirlar = [];
+    G.sonuclar.forEach((s, j) => {
+      const d = G.deger(s, n);
+      const c = noktalar[j];
+      if (d == null) { c.setAttribute('visibility', 'hidden'); return; }
+      c.setAttribute('visibility', 'visible');
+      c.setAttribute('cx', xx); c.setAttribute('cy', y(d));
+      satirlar.push({ ad: s.a.ad, d, id: s.a.id });
+    });
+    satirlar.sort((a, b) => b.d - a.d);
+    ipucu.textContent = '';
+    ipucu.appendChild(el('div', 'ip-baslik', n.son ? tarihMetin(n.ms) + ' · dönem sonu' : ayEtiket(n.i) + ' alımından sonra'));
+    for (const r of satirlar) {
+      const s = el('div', 'ip-satir');
+      const c = el('span', 'ip-cizgi'); c.style.background = 'var(--s-' + r.id + ')';
+      s.append(c, el('b', null, para(r.d)), el('span', null, r.ad));
+      ipucu.appendChild(s);
+    }
+    const s = el('div', 'ip-satir');
+    s.append(el('span', 'ip-cizgi kesik'), el('b', null, para(n.yatan)), el('span', null, 'Yatırılan'));
+    ipucu.appendChild(s);
+    ipucu.hidden = false;
+    const tw = ipucu.offsetWidth;
+    let left = xx + 14;
+    if (left + tw > W) left = xx - 14 - tw;
+    ipucu.style.left = Math.max(0, left) + 'px';
+  }
+  function gizle() {
+    G.aktif = null;
+    imlec.setAttribute('visibility', 'hidden');
+    noktaG.setAttribute('visibility', 'hidden');
+    ipucu.hidden = true;
+  }
+  function enYakin(px) {
+    let en = 0, fark = Infinity;
+    G.noktalar.forEach((n, k) => { const f = Math.abs(x(n.x) - px); if (f < fark) { fark = f; en = k; } });
+    return en;
+  }
+  const konum = (e) => e.clientX - svg.getBoundingClientRect().left;
+  svg.addEventListener('pointermove', (e) => goster(enYakin(konum(e))));
+  svg.addEventListener('pointerdown', (e) => goster(enYakin(konum(e))));
+  svg.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') gizle(); });
+  svg.addEventListener('blur', gizle);
+  svg.addEventListener('keydown', (e) => {
+    const son = G.noktalar.length - 1;
+    let k = G.aktif ?? son;
+    if (e.key === 'ArrowLeft') k = Math.max(0, k - 1);
+    else if (e.key === 'ArrowRight') k = Math.min(son, k + 1);
+    else if (e.key === 'Home') k = 0;
+    else if (e.key === 'End') k = son;
+    else if (e.key === 'Escape') { gizle(); return; }
+    else return;
+    e.preventDefault();
+    goster(k);
+  });
+
+  kap.insertBefore(svg, ipucu);
+  if (G.aktif != null && G.aktif < G.noktalar.length) goster(G.aktif);
+
+  // Bir seri ötekileri ezince ipucu ver
+  if (!log && G.sonuclar.length > 1) {
+    const d = G.sonuclar.map((s) => s.deger).sort((a, b) => b - a);
+    if (d[0] > 6 * d[1]) $('#grafik-not').textContent = 'Bir varlık ötekilerden çok daha fazla büyüdüğü için diğer çizgiler dipte kalıyor. Logaritmik ölçek, hepsini oransal olarak karşılaştırmayı kolaylaştırır.';
+  }
+}
+
+function sonuclariYaz(hepsi) {
+  const kap = $('#sonuclar');
+  kap.textContent = '';
+  const sirali = [...hepsi].sort((a, b) => (b.yok ? -1 : b.deger) - (a.yok ? -1 : a.deger));
+  for (const s of sirali) {
+    const a = s.a;
+    const k = el('article', 'sonuc' + (s.yok ? ' bos' : ''));
+    k.style.setProperty('--renk', 'var(--s-' + a.id + ')');
+    const bas = el('div', 'bas');
+    bas.append(el('b', null, a.ad), el('span', null, a.kod));
+    k.appendChild(bas);
+    if (s.yok) {
+      k.appendChild(el('div', 'deger', 'Bu dönemde veri yok'));
+      k.appendChild(el('p', 'not', a.ad + ' verisi ' + ayEtiket(a.bas) + "'te başlıyor."));
+      kap.appendChild(k);
+      continue;
+    }
+    k.appendChild(el('div', 'deger', para(s.deger)));
+    k.appendChild(el('div', 'kazanc ' + (s.kar >= 0 ? 'arti' : 'eksi'), f0s.format(s.kar) + ' · ' + yuzde(s.oran)));
+    const dl = el('dl');
+    const satir = (dt, dd) => dl.append(el('dt', null, dt), el('dd', null, dd));
+    satir('Yatırılan', para(s.yatan));
+    satir('Yıllık getiri', s.yillik == null ? '—' : yuzde(s.yillik));
+    if (a.birim === 'ons') {
+      satir('Biriken', sayi(s.adet * GRAM, 1) + ' gram');
+      satir('Ort. maliyet', para(s.yatan / s.adet) + ' / ons');
+    } else if (a.birim === 'BTC') {
+      satir('Biriken', sayi(s.adet, 4) + ' BTC');
+      satir('Ort. maliyet', para(s.yatan / s.adet) + ' / BTC');
+    } else {
+      satir('Biriken', sayi(s.adet, s.adet < 10 ? 3 : 1) + ' pay');
+      satir('Ort. maliyet', para(s.yatan / s.adet) + ' / pay');
+    }
+    satir('En kötü an', s.enKotu.oran < 0 ? yuzde(s.enKotu.oran) + ' · ' + ayEtiket(s.enKotu.i, true) : 'zarara düşmedi');
+    k.appendChild(dl);
+    if (s.ilk > durum.bas) k.appendChild(el('p', 'not', a.ad + ' verisi ' + ayEtiket(a.bas) + "'te başlıyor; hesap bu aydan itibaren (" + s.ay + ' ay).'));
+    kap.appendChild(k);
+  }
+}
+
+function tabloYaz() {
+  const t = $('#tablo');
+  t.textContent = '';
+  const G = grafikDurum;
+  if (!G) return;
+  const thead = el('thead'), tr = el('tr');
+  tr.append(el('th', null, 'Tarih'), el('th', null, 'Yatırılan'));
+  for (const s of G.sonuclar) tr.appendChild(el('th', null, s.a.ad));
+  thead.appendChild(tr);
+  const tbody = el('tbody');
+  for (const n of G.noktalar) {
+    if (!n.son && ayYM(n.i)[1] !== 12) continue;
+    const r = el('tr');
+    r.append(el('td', null, n.son ? tarihMetin(n.ms) + ' (dönem sonu)' : ayEtiket(n.i)), el('td', null, para(n.yatan)));
+    for (const s of G.sonuclar) { const d = G.deger(s, n); r.appendChild(el('td', null, d == null ? '—' : para(d))); }
+    tbody.appendChild(r);
+  }
+  t.append(thead, tbody);
+}
+
+// ---------- Başlat ----------
+function baslat(veri) {
+  V = veri;
+  [Y0, M0] = V.ilk_ay.split('-').map(Number);
+  SON = V.ay_sayisi - 1;
+  durum = { tutar: 100, bas: SON - 119, bit: SON, secili: new Set(V.varliklar.map((a) => a.id)), olcek: 'dogrusal' };
+  urlOku();
+  kontrolleriKur();
+  $('#kaynak').textContent = 'Veri: Yahoo Finance, son güncelleme ' + tarihMetin(isoTarih(V.guncelleme)) + '.';
+  ciz();
+  let bekleyen = 0, sonGen = $('#grafik').clientWidth;
+  new ResizeObserver(() => {
+    const w = $('#grafik').clientWidth;
+    if (w === sonGen) return;
+    sonGen = w;
+    cancelAnimationFrame(bekleyen);
+    bekleyen = requestAnimationFrame(grafikCiz);
+  }).observe($('#grafik'));
+}
+
+fetch('/veri/dca.json')
+  .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
+  .then(baslat)
+  .catch(() => {
+    $('#grafik').appendChild(el('p', 'hata', 'Fiyat verisi yüklenemedi. Sayfayı yenilemeyi deneyin.'));
+  });
+})();
+</script>
+</body>
+</html>
