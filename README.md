@@ -6,7 +6,7 @@ Derleme adımı olmayan statik site. Cloudflare Pages bu klasörü olduğu gibi 
 index.html        Ana sayfa
 stil.css          Bütün sayfaların ortak stili (renkler, başlık, kartlar, koyu tema)
 araclar/dca.html  Düzenli alım (DCA) hesaplayıcı → /araclar/dca
-veri/dca.json     Hesaplayıcının verisi: son 180 ayın aylık fiyatları
+veri/dca.json     Hesaplayıcının verisi: VT, VOO, QQQ, SMH, altın, Bitcoin; son 180 ayın aylık fiyatları
 favicon.svg       Δ = 0 işareti
 og.png            Bağlantı paylaşılınca görünen önizleme (1200×630, kanal/cikti/kapak_2560.png'den kırpıldı)
 ```
@@ -45,8 +45,13 @@ değerlerini yeni adrese çevir; `og:image` tam adres olmalı, göreli yolu ço�
 Her ayın ilk işlem günü fiyatı; ETF'lerde temettü düzeltilmiş kapanış. Ayda bir çalıştırıp commit + subtree push
 yeterli; 15 yıllık pencere kendiliğinden kayar. `veri/aylik/` dosyalarına dokunmaz.
 
-Hesaplayıcı adresi parametre alır, hesap paylaşılabilir:
-`/araclar/dca?tutar=100&bas=2016-12&bit=2026-11&varlik=voo,qqq&olcek=log`
+Hesaplayıcı adresi parametre alır, hesap paylaşılabilir (sayfa adresi seçimlere göre kendisi günceller):
+- Toplam tutar ve dağılım: `/araclar/dca?mod=dagilim&toplam=500&dagilim=vt:40,altin:30,bitcoin:30&bas=2016-12&bit=2026-11`
+- Her varlığa ayrı tutar: `/araclar/dca?mod=ayri&tutar=voo:200,altin:100,bitcoin:50`
+- Grafik: `&gorunum=varliklar` (varsayılan sepet), `&olcek=log` (yalnız varlıklar görünümünde)
+
+Yığılmış grafikteki sıra (`YIGIN`, dca.html) renk doğrulamasından geçmiş bir sıradır; yeni varlık eklenirse
+renk ve sıra yeniden doğrulanmalı (dataviz validate_palette, açık #ffffff ve koyu #172030 zeminde).
 
 ## Yerel önizleme
 

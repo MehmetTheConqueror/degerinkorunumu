@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Düzenli Alım Hesaplayıcı · Değerin Korunumu</title>
-<meta name="description" content="S&P 500, Nasdaq 100, çip şirketleri, altın ve Bitcoin'e her ay aynı tutarı yatırsaydınız ne olurdu? Son 15 yılın aylık fiyatlarıyla düzenli alım (DCA) hesaplayıcı.">
+<meta name="description" content="Tüm dünya borsası, S&P 500, Nasdaq 100, çip şirketleri, altın ve Bitcoin'den kendi sepetinizi kurun; her ay düzenli alım yapsaydınız sepetiniz bugün ne kadar ederdi? Son 15 yılın aylık fiyatlarıyla DCA hesaplayıcı.">
 <meta name="theme-color" content="#1b3a6b">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="canonical" href="https://degerinkorunumu.pages.dev/araclar/dca">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Düzenli alım (DCA) hesaplayıcı · Değerin Korunumu">
-<meta property="og:description" content="Her ay aynı tutarla alım yapsaydınız bugün ne kadarınız olurdu? S&P 500, Nasdaq 100, çip şirketleri, altın ve Bitcoin.">
+<meta property="og:description" content="Kendi sepetinizi kurun: her ay düzenli alım yapsaydınız bugün ne kadarınız olurdu? Tüm dünya borsası, S&P 500, Nasdaq 100, çip şirketleri, altın ve Bitcoin.">
 <meta property="og:url" content="https://degerinkorunumu.pages.dev/araclar/dca">
 <meta property="og:image" content="https://degerinkorunumu.pages.dev/og.png">
 <meta property="og:image:width" content="1200">
@@ -22,25 +22,27 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;800&family=Inter:wght@400;500;700&display=swap">
 <link rel="stylesheet" href="/stil.css">
 <style>
-/* Varlık renkleri kimliğe bağlı; filtre değişince boyanmaz. Açık ve koyu adımlar ayrı doğrulandı. */
+/* Varlık renkleri kimliğe bağlı; seçim değişince boyanmaz. Açık ve koyu adımlar ayrı doğrulandı;
+   yığılmış grafikte komşu renkler YIGIN sırasıyla (script) ayırt edilebilir kalır. */
 :root {
-  --s-qqq: #2a78d6; --s-bitcoin: #eb6834; --s-voo: #1baf7a; --s-altin: #eda100; --s-smh: #e87ba4;
+  --s-vt: #6250d6; --s-qqq: #2a78d6; --s-bitcoin: #eb6834; --s-voo: #1baf7a; --s-altin: #eda100; --s-smh: #e87ba4;
   --pozitif: #006300; --negatif: #c62f2f;
   --izgara: #e6e9ef; --eksen: #c7cdd8; --soluk: #6b7487;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --s-qqq: #3987e5; --s-bitcoin: #d95926; --s-voo: #199e70; --s-altin: #c98500; --s-smh: #d55181;
+    --s-vt: #9085e9; --s-qqq: #3987e5; --s-bitcoin: #d95926; --s-voo: #199e70; --s-altin: #c98500; --s-smh: #d55181;
     --pozitif: #2bb52b; --negatif: #ef6b6b;
     --izgara: #222c3d; --eksen: #34425a; --soluk: #8b95a8;
   }
 }
 :root[data-theme="dark"] {
-  --s-qqq: #3987e5; --s-bitcoin: #d95926; --s-voo: #199e70; --s-altin: #c98500; --s-smh: #d55181;
+  --s-vt: #9085e9; --s-qqq: #3987e5; --s-bitcoin: #d95926; --s-voo: #199e70; --s-altin: #c98500; --s-smh: #d55181;
   --pozitif: #2bb52b; --negatif: #ef6b6b;
   --izgara: #222c3d; --eksen: #34425a; --soluk: #8b95a8;
 }
 
+[hidden] { display: none !important; }
 .ust { padding: 40px 0 8px; }
 .ust h1 { font-size: clamp(32px, 6vw, 52px); }
 .ust p { margin-top: 14px; max-width: 64ch; color: var(--ink2); }
@@ -48,33 +50,53 @@
 .arac { padding: 24px 0 56px; }
 
 /* Kontroller */
-.kontroller { display: flex; flex-wrap: wrap; gap: 20px 32px; align-items: flex-end; }
+.kontroller { display: grid; gap: 28px 40px; grid-template-columns: 1fr; }
+@media (min-width: 860px) { .kontroller { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); } }
+.blok { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.blok-baslik { font-family: Manrope, Inter, sans-serif; font-weight: 800; font-size: 17px; }
 .alan { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.alan.genis { flex-basis: 100%; }
+.yan-yana { display: flex; flex-wrap: wrap; gap: 18px 24px; }
 .etk, .alan > label { font-size: 13px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; color: var(--ink2); }
-.tutar-kutu { display: flex; align-items: center; border: 1.5px solid var(--line); border-radius: 10px; background: var(--bg); padding: 0 12px; width: 150px; }
-.tutar-kutu:focus-within { border-color: var(--accent); }
-.tutar-kutu span { color: var(--ink2); font-weight: 700; }
-.tutar-kutu input { border: 0; background: transparent; color: var(--ink); font: 700 18px Inter, sans-serif; padding: 9px 8px; width: 100%; outline: none; }
+.kutu { display: inline-flex; align-items: center; border: 1.5px solid var(--line); border-radius: 10px; background: var(--bg); padding: 0 10px; }
+.kutu:focus-within { border-color: var(--accent); }
+.kutu span { color: var(--ink2); font-weight: 700; }
+.kutu input { border: 0; background: transparent; color: var(--ink); font: 700 16px Inter, sans-serif; padding: 8px 6px; width: 100%; outline: none; min-width: 0; text-align: right; }
+.kutu.buyuk { width: 160px; }
+.kutu.buyuk input { font-size: 18px; text-align: left; padding: 9px 8px; }
 .ikili { display: flex; gap: 6px; }
 select {
   font: 500 15px Inter, sans-serif; color: var(--ink); background: var(--bg);
   border: 1.5px solid var(--line); border-radius: 10px; padding: 9px 10px; cursor: pointer;
 }
-select:focus-visible, .secim button:focus-visible, .grafik svg:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+select:focus-visible, button:focus-visible, .grafik svg:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .secim { display: flex; flex-wrap: wrap; gap: 8px; }
 .secim button {
   font: 600 14px Inter, sans-serif; color: var(--ink2); background: var(--bg);
   border: 1.5px solid var(--line); border-radius: 999px; padding: 8px 14px; cursor: pointer;
-  display: inline-flex; align-items: center; gap: 8px;
 }
 .secim button:hover { color: var(--ink); }
-.secim button[aria-pressed="true"] { color: var(--ink); border-color: var(--ink2); background: var(--surface); }
-.secim.donem button[aria-pressed="true"], .secim.olcek button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-.secim .anahtar { width: 14px; height: 4px; border-radius: 2px; flex: none; }
-.secim button[aria-pressed="false"] .anahtar { opacity: .3; }
-.secim button[aria-pressed="false"] .ad { text-decoration: line-through; text-decoration-color: var(--soluk); }
+.secim button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
 .secim.kucuk button { padding: 6px 12px; font-size: 13px; }
+.secim button:disabled { opacity: .45; cursor: default; }
+
+/* Varlık satırları */
+.satirlar { display: flex; flex-direction: column; gap: 8px; }
+.satir { display: grid; grid-template-columns: minmax(0, 1fr) 118px 72px; gap: 10px; align-items: center; }
+.satir .ad { display: flex; align-items: center; gap: 10px; min-width: 0; font-weight: 600; font-size: 15px; }
+.satir .ad i { width: 14px; height: 4px; border-radius: 2px; flex: none; }
+.satir .ad small { color: var(--soluk); font-weight: 700; font-size: 12px; }
+.satir .ek { color: var(--soluk); font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+@media (max-width: 480px) {
+  .satir { grid-template-columns: minmax(0, 1fr) 96px 62px; gap: 8px; }
+  .satir .ad { font-size: 14px; gap: 8px; }
+  .satir .ad small { display: none; }
+}
+.satir.sifir .ad { color: var(--soluk); }
+.satir.sifir .ad i { opacity: .3; }
+.satir-alt { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; justify-content: space-between; padding-top: 10px; border-top: 1px solid var(--line); font-size: 14px; color: var(--ink2); }
+.satir-alt b { color: var(--ink); }
+.satir-alt .uyar { color: var(--negatif); font-weight: 600; }
+.duz-dugme { font: 600 13px Inter, sans-serif; color: var(--accent); background: none; border: 0; cursor: pointer; padding: 4px 0; }
 
 .ozet { margin: 20px 2px 0; color: var(--ink2); font-size: 15px; }
 .ozet b { color: var(--ink); }
@@ -83,6 +105,7 @@ select:focus-visible, .secim button:focus-visible, .grafik svg:focus-visible { o
 .grafik-kart { margin-top: 16px; padding: 20px 20px 12px; }
 .grafik-bas { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; }
 .grafik-bas h2 { font-size: 20px; }
+.grafik-bas .sag { display: flex; flex-wrap: wrap; gap: 10px; }
 .grafik { position: relative; margin-top: 8px; }
 .grafik svg { display: block; width: 100%; touch-action: pan-y; }
 .grafik .izgara-c { stroke: var(--izgara); stroke-width: 1; }
@@ -90,7 +113,9 @@ select:focus-visible, .secim button:focus-visible, .grafik svg:focus-visible { o
 .grafik text { fill: var(--soluk); font: 500 12px Inter, sans-serif; }
 .grafik text.uc-etiket { fill: var(--ink2); font-weight: 700; font-size: 12.5px; }
 .grafik .seri { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
-.grafik .yatan { fill: none; stroke: var(--soluk); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.grafik .alan-d { fill-opacity: .82; }
+.grafik .alan-kenar { fill: none; stroke: var(--surface); stroke-width: 1.5; stroke-linejoin: round; }
+.grafik .yatan { fill: none; stroke: var(--ink2); stroke-width: 1.5; stroke-dasharray: 5 4; }
 .grafik .imlec { stroke: var(--ink2); stroke-width: 1; opacity: .5; }
 .grafik .nokta { stroke: var(--surface); stroke-width: 2; }
 .ipucu {
@@ -102,27 +127,41 @@ select:focus-visible, .secim button:focus-visible, .grafik svg:focus-visible { o
 .ipucu .ip-satir { display: grid; grid-template-columns: 14px auto 1fr; gap: 8px; align-items: center; line-height: 1.7; }
 .ipucu .ip-satir b { color: var(--ink); font-variant-numeric: tabular-nums; text-align: right; }
 .ipucu .ip-satir span:last-child { color: var(--ink2); }
+.ipucu .ip-satir.toplam { border-bottom: 1px solid var(--line); padding-bottom: 4px; margin-bottom: 4px; }
+.ipucu .ip-satir.toplam b { font-size: 14px; }
 .ipucu .ip-cizgi { height: 3px; border-radius: 2px; }
-.ipucu .ip-cizgi.kesik { background: repeating-linear-gradient(90deg, var(--soluk) 0 4px, transparent 4px 7px); }
-.grafik-not { font-size: 13px; color: var(--soluk); margin-top: 6px; }
+.ipucu .ip-cizgi.kesik { background: repeating-linear-gradient(90deg, var(--ink2) 0 4px, transparent 4px 7px); }
+.grafik-not { font-size: 13px; color: var(--soluk); margin-top: 6px; min-height: 1em; }
 
 /* Sonuçlar */
 .ara-baslik { font-size: 24px; margin-top: 40px; }
+.sepet { margin-top: 16px; display: grid; gap: 24px 40px; grid-template-columns: 1fr; }
+@media (min-width: 760px) { .sepet { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); } }
+.sepet .deger { font-family: Manrope, Inter, sans-serif; font-weight: 800; font-size: clamp(34px, 6vw, 46px); letter-spacing: -0.02em; line-height: 1.1; font-variant-numeric: tabular-nums; margin-top: 6px; }
+.sepet .kazanc { margin-top: 6px; font-weight: 700; font-size: 17px; font-variant-numeric: tabular-nums; }
+.sepet dl { margin-top: 18px; }
+.dagilim-bar { display: flex; height: 14px; border-radius: 7px; overflow: hidden; gap: 2px; margin-top: 10px; background: var(--surface); }
+.dagilim-bar span { display: block; height: 100%; min-width: 2px; }
+.dagilim-liste { margin-top: 14px; display: grid; grid-template-columns: auto 1fr auto auto; gap: 6px 12px; font-size: 14px; align-items: center; font-variant-numeric: tabular-nums; }
+.dagilim-liste i { width: 14px; height: 4px; border-radius: 2px; }
+.dagilim-liste .sag { text-align: right; }
+.dagilim-liste .soluk { color: var(--soluk); }
+.kucuk-not { margin-top: 12px; font-size: 13px; color: var(--soluk); line-height: 1.5; }
+
 .sonuclar { margin-top: 16px; display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
 .sonuc { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 18px 16px; position: relative; overflow: hidden; }
 .sonuc::before { content: ""; position: absolute; left: 0; top: 0; right: 0; height: 4px; background: var(--renk); }
 .sonuc .bas { display: flex; align-items: baseline; gap: 8px; }
 .sonuc .bas b { font-family: Manrope, Inter, sans-serif; font-weight: 800; font-size: 17px; }
 .sonuc .bas span { color: var(--soluk); font-size: 13px; font-weight: 700; }
-.sonuc .deger { margin-top: 10px; font-family: Manrope, Inter, sans-serif; font-weight: 800; font-size: 30px; letter-spacing: -0.02em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.sonuc .deger { margin-top: 10px; font-family: Manrope, Inter, sans-serif; font-weight: 800; font-size: 28px; letter-spacing: -0.02em; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .sonuc .kazanc { margin-top: 4px; font-weight: 700; font-size: 15px; font-variant-numeric: tabular-nums; }
 .arti { color: var(--pozitif); }
 .eksi { color: var(--negatif); }
-.sonuc dl { margin-top: 14px; display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 14px; border-top: 1px solid var(--line); padding-top: 12px; }
-.sonuc dt { color: var(--soluk); }
-.sonuc dd { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+dl.bilgi { margin-top: 14px; display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 14px; border-top: 1px solid var(--line); padding-top: 12px; }
+dl.bilgi dt { color: var(--soluk); white-space: nowrap; }
+dl.bilgi dd { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .sonuc .not { margin-top: 10px; font-size: 13px; color: var(--soluk); line-height: 1.5; }
-.sonuc.bos .deger { font-size: 18px; color: var(--soluk); }
 .uyari { margin-top: 18px; font-size: 14px; color: var(--ink2); }
 
 details.tablo { margin-top: 24px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
@@ -166,32 +205,42 @@ details.tablo summary { cursor: pointer; padding: 14px 18px; font-weight: 700; f
   <section class="ust">
     <div class="kap">
       <h1>Düzenli alım hesaplayıcı</h1>
-      <p>Fiyatın yüksek mi düşük mü olduğuna bakmadan her ay aynı tutarla alım yapmaya düzenli alım, kısaca DCA deniyor. Aylık tutarı ve dönemi seçin; son 15 yılın fiyatlarıyla bu alımların dönem sonunda ne kadar ettiğini görün.</p>
+      <p>Fiyatın yüksek mi düşük mü olduğuna bakmadan her ay aynı tutarla alım yapmaya düzenli alım, kısaca DCA deniyor. Aylık tutarı ve bu tutarın varlıklar arasında nasıl dağılacağını seçin; sepetinizin son 15 yılın fiyatlarıyla dönem sonunda ne kadar ettiğini görün.</p>
     </div>
   </section>
 
   <section class="arac">
     <div class="kap">
       <div class="kart kontroller">
-        <div class="alan">
-          <label for="tutar">Aylık tutar</label>
-          <div class="tutar-kutu"><span>$</span><input id="tutar" type="number" min="1" max="1000000" step="any" inputmode="decimal" value="100"></div>
+        <div class="blok">
+          <div class="blok-baslik">Her ay ne kadar, nereye?</div>
+          <div class="secim kucuk" id="mod" role="group" aria-label="Tutar girişi">
+            <button type="button" data-m="dagilim">Toplam tutar ve dağılım</button>
+            <button type="button" data-m="ayri">Her varlığa ayrı tutar</button>
+          </div>
+          <div class="alan" id="toplam-alan">
+            <label for="toplam">Aylık toplam</label>
+            <div class="kutu buyuk"><span>$</span><input id="toplam" type="number" min="0" max="1000000" step="any" inputmode="decimal"></div>
+          </div>
+          <div class="satirlar" id="satirlar"></div>
+          <div class="satir-alt" id="satir-alt" aria-live="polite"></div>
         </div>
-        <div class="alan">
-          <label for="bas-ay">Başlangıç</label>
-          <div class="ikili"><select id="bas-ay"></select><select id="bas-yil" aria-label="Başlangıç yılı"></select></div>
-        </div>
-        <div class="alan">
-          <label for="bit-ay">Bitiş</label>
-          <div class="ikili"><select id="bit-ay"></select><select id="bit-yil" aria-label="Bitiş yılı"></select></div>
-        </div>
-        <div class="alan genis">
-          <span class="etk" id="donem-etk">Hızlı seçim: son</span>
-          <div class="secim donem" id="hazir" role="group" aria-labelledby="donem-etk"></div>
-        </div>
-        <div class="alan genis">
-          <span class="etk" id="varlik-etk">Varlıklar</span>
-          <div class="secim" id="varliklar" role="group" aria-labelledby="varlik-etk"></div>
+        <div class="blok">
+          <div class="blok-baslik">Hangi dönemde?</div>
+          <div class="yan-yana">
+            <div class="alan">
+              <label for="bas-ay">Başlangıç</label>
+              <div class="ikili"><select id="bas-ay"></select><select id="bas-yil" aria-label="Başlangıç yılı"></select></div>
+            </div>
+            <div class="alan">
+              <label for="bit-ay">Bitiş</label>
+              <div class="ikili"><select id="bit-ay"></select><select id="bit-yil" aria-label="Bitiş yılı"></select></div>
+            </div>
+          </div>
+          <div class="alan">
+            <span class="etk" id="donem-etk">Hızlı seçim: son</span>
+            <div class="secim" id="hazir" role="group" aria-labelledby="donem-etk"></div>
+          </div>
         </div>
       </div>
 
@@ -199,10 +248,16 @@ details.tablo summary { cursor: pointer; padding: 14px 18px; font-weight: 700; f
 
       <div class="kart grafik-kart">
         <div class="grafik-bas">
-          <h2>Birikimin değeri</h2>
-          <div class="secim olcek kucuk" id="olcek" role="group" aria-label="Grafik ölçeği">
-            <button type="button" data-o="dogrusal">Doğrusal</button>
-            <button type="button" data-o="log">Logaritmik</button>
+          <h2 id="grafik-baslik">Sepetin değeri</h2>
+          <div class="sag">
+            <div class="secim kucuk" id="gorunum" role="group" aria-label="Grafik görünümü">
+              <button type="button" data-g="sepet">Sepet</button>
+              <button type="button" data-g="varliklar">Varlıklar</button>
+            </div>
+            <div class="secim kucuk" id="olcek" role="group" aria-label="Grafik ölçeği">
+              <button type="button" data-o="dogrusal">Doğrusal</button>
+              <button type="button" data-o="log">Logaritmik</button>
+            </div>
           </div>
         </div>
         <div class="grafik" id="grafik">
@@ -211,9 +266,12 @@ details.tablo summary { cursor: pointer; padding: 14px 18px; font-weight: 700; f
         <p class="grafik-not" id="grafik-not"></p>
       </div>
 
-      <h2 class="ara-baslik">Dönem sonunda</h2>
+      <h2 class="ara-baslik">Sepet, dönem sonunda</h2>
+      <div class="kart sepet" id="sepet"></div>
+
+      <h2 class="ara-baslik">Varlık bazında</h2>
       <div class="sonuclar" id="sonuclar"></div>
-      <p class="uyari">Bunlar geçmişin rakamları. Geçmişte kazandıran bir varlığın gelecekte de aynı şekilde kazandıracağının garantisi yok.</p>
+      <p class="uyari">Bunlar geçmişin rakamları. Geçmişte kazandıran bir varlığın ya da sepetin gelecekte de aynı şekilde kazandıracağının garantisi yok.</p>
 
       <details class="tablo">
         <summary>Yıllara göre değerler (tablo)</summary>
@@ -226,9 +284,10 @@ details.tablo summary { cursor: pointer; padding: 14px 18px; font-weight: 700; f
     <div class="kap">
       <h2>Hesap nasıl yapılıyor?</h2>
       <ul class="notlar">
-        <li>Alım, her ayın ilk işlem günündeki kapanış fiyatından yapılıyor. Başlangıç ve bitiş ayı da dahil, seçilen her ay için bir alım var.</li>
+        <li>Alım, her ayın ilk işlem günündeki kapanış fiyatından yapılıyor. Başlangıç ve bitiş ayı da dahil, seçilen her ay için her varlığa kendi tutarı kadar alım var.</li>
+        <li>Sepette her ay aynı dağılımla alım yapılıyor ama eldekiler satılıp yeniden dengelenmiyor. Hızlı büyüyen varlığın sepetteki payı zamanla artıyor; dönem sonundaki dağılım bu yüzden başlangıçtakinden farklı çıkıyor.</li>
         <li>Birikimin değeri dönemin sonundaki fiyatla hesaplanıyor. Bitiş olarak son ayı seçtiyseniz son kapanış fiyatı kullanılıyor, daha eski bir ay seçtiyseniz bir sonraki ayın ilk işlem günü.</li>
-        <li>VOO, QQQ ve SMH fonlarının dağıttığı temettüler aynı fona yeniden yatırılmış sayılıyor. Altında ons fiyatı (vadeli kontrat; spot fiyata çok yakın), Bitcoin'de dolar fiyatı kullanılıyor. Bitcoin verisi Ekim 2014'ten başlıyor, daha önceki aylar için Bitcoin'e alım yapılmıyor.</li>
+        <li>VT, VOO, QQQ ve SMH fonlarının dağıttığı temettüler aynı fona yeniden yatırılmış sayılıyor. Altında ons fiyatı (vadeli kontrat; spot fiyata çok yakın), Bitcoin'de dolar fiyatı kullanılıyor. Bitcoin verisi Ekim 2014'ten başlıyor; daha önceki aylarda Bitcoin'e ayrılan pay yatırılmıyor, o aylarda toplam yatırılan da o kadar az oluyor.</li>
         <li>Komisyon, alım-satım farkı ve vergi hesaba katılmadı. Fonların yıllık yönetim gideri fiyatın içinde zaten var.</li>
         <li>Bütün tutarlar dolar cinsinden. Lirayla düzenli alım yapan birinin sonucu, o dönemde kurun nasıl gittiğine göre farklı çıkar.</li>
         <li>Yıllık getiri, her ay farklı bir tarihte para yatırıldığı için iç verim oranıyla hesaplanıyor; bir yıldan kısa dönemlerde gösterilmiyor. "En kötü an", birikimin o ana kadar yatırılan paraya göre en çok gerilediği ay başı.</li>
@@ -255,6 +314,11 @@ const KISA = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', '
 const GRAM = 31.1035;
 const YIL_MS = 365.25 * 864e5;
 const HAZIR = [1, 3, 5, 10, 15];
+const UST = 1e6;
+// Yığılmış grafikte ve dağılım çubuğunda alttan üste sıra. Renk doğrulayıcısından iki temada da geçen sıralardan
+// biri (sarı altın ile turuncu Bitcoin, pembe SMH ile turuncu Bitcoin yan yana gelmesin diye).
+const YIGIN = ['altin', 'voo', 'vt', 'smh', 'qqq', 'bitcoin'];
+const yiginSira = (a, b) => YIGIN.indexOf(a.a.id) - YIGIN.indexOf(b.a.id);
 
 const nf = (o) => new Intl.NumberFormat('tr-TR', o);
 const f0 = nf({ style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
@@ -264,11 +328,13 @@ const fKs = nf({ maximumFractionDigits: 1 });
 const fK = { format: (v) => v >= 1e6 ? '$' + fKs.format(v / 1e6) + ' mn' : v >= 1e3 ? '$' + fKs.format(v / 1e3) + ' bin' : '$' + fKs.format(v) };
 const fY1 = nf({ style: 'percent', maximumFractionDigits: 1, signDisplay: 'exceptZero' });
 const fY0 = nf({ style: 'percent', maximumFractionDigits: 0, signDisplay: 'exceptZero' });
-const para = (n) => (Math.abs(n) >= 100 ? f0 : f2).format(n);
+const fPay = nf({ style: 'percent', maximumFractionDigits: 0 });
+const para = (n) => { const r = Math.round(n * 100) / 100; return (Math.abs(r) >= 100 || Number.isInteger(r) ? f0 : f2).format(r); };
 const yuzde = (n) => (Math.abs(n) >= 10 ? fY0 : fY1).format(n);
 const sayi = (n, d) => nf({ maximumFractionDigits: d }).format(n);
 
 const $ = (s) => document.querySelector(s);
+const $$ = (s) => document.querySelectorAll(s);
 const SVG = 'http://www.w3.org/2000/svg';
 function el(tag, cls, metin) {
   const e = document.createElement(tag);
@@ -282,8 +348,9 @@ function sv(tag, attr, ebeveyn) {
   if (ebeveyn) ebeveyn.appendChild(e);
   return e;
 }
+const renk = (id) => 'var(--s-' + id + ')';
 
-let V, Y0, M0, SON, durum, grafikDurum = null;
+let V, Y0, M0, SON, durum, G = null;
 
 // Ay sırası (0 = verinin ilk ayı) ↔ yıl/ay
 const ayYM = (i) => { const t = Y0 * 12 + (M0 - 1) + i; return [Math.floor(t / 12), (t % 12) + 1]; };
@@ -294,24 +361,52 @@ const isoTarih = (s) => Date.parse(s + 'T00:00:00Z');
 const tarihMetin = (ms) => { const d = new Date(ms); return d.getUTCDate() + ' ' + AYLAR[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); };
 const tarihX = (ms) => { const d = new Date(ms); return ayIdx(d.getUTCFullYear(), d.getUTCMonth() + 1) + (d.getUTCDate() - 1) / 30.4; };
 
+// ---------- Tutarlar ----------
+// Dağılımda paylar toplamlarına göre oranlanır: aylık toplam her zaman girilen tutar kadar yatırılır.
+const oranToplam = () => V.varliklar.reduce((s, a) => s + (durum.oran[a.id] || 0), 0);
+function tutar(id) {
+  if (durum.mod === 'ayri') return durum.ayri[id] || 0;
+  const t = oranToplam();
+  return t > 0 ? durum.toplam * (durum.oran[id] || 0) / t : 0;
+}
+const yuvarla = (v, d) => Math.round(v * 10 ** d) / 10 ** d;
+const esitPay = (ids) => { const o = {}; for (const a of V.varliklar) o[a.id] = ids.includes(a.id) ? 100 / ids.length : 0; return o; };
+
+function modDegistir(yeni) {
+  if (yeni === durum.mod) return;
+  if (yeni === 'ayri') {
+    for (const a of V.varliklar) durum.ayri[a.id] = Math.round(tutar(a.id) * 100) / 100;
+  } else {
+    const t = V.varliklar.reduce((s, a) => s + (durum.ayri[a.id] || 0), 0);
+    if (t > 0) {
+      durum.toplam = Math.abs(t - Math.round(t)) < 0.05 ? Math.round(t) : yuvarla(t, 2);
+      for (const a of V.varliklar) durum.oran[a.id] = 100 * (durum.ayri[a.id] || 0) / t;
+    }
+  }
+  durum.mod = yeni;
+  satirlariKur();
+  ciz();
+}
+
 // ---------- Hesap ----------
-function irr(akis, tutar, sonMs, deger) {
-  // deger = Σ tutar·(1+r)^(yıl farkı) denkleminin kökü; sağ taraf r ile artar, kök tek.
-  const t = akis.map((ms) => (sonMs - ms) / YIL_MS);
-  const g = (r) => deger - t.reduce((s, ti) => s + tutar * Math.pow(1 + r, ti), 0);
+// akis: [[ms, tutar]], çıkışlar negatif. Bütün alımlar değerlemeden önce olduğu için kök tek.
+function irr(akis) {
+  const t0 = Math.min(...akis.map((a) => a[0]));
+  const ak = akis.map(([ms, c]) => [(ms - t0) / YIL_MS, c]);
+  const npv = (r) => ak.reduce((s, [t, c]) => s + c * Math.pow(1 + r, -t), 0);
   let lo = -0.99, hi = 1;
-  while (g(hi) > 0 && hi < 1e4) hi *= 2;
+  while (npv(hi) > 0 && hi < 1e4) hi *= 2;
   for (let k = 0; k < 200; k++) {
     const mid = (lo + hi) / 2;
-    if (g(mid) > 0) lo = mid; else hi = mid;
+    if (npv(mid) > 0) lo = mid; else hi = mid;
   }
   return (lo + hi) / 2;
 }
 
 function hesapla(a) {
+  const T = tutar(a.id);
   const ilk = Math.max(durum.bas, a.bas);
-  if (ilk > durum.bit) return { a, yok: true };
-  const T = durum.tutar;
+  if (ilk > durum.bit) return { a, T, yok: true };
   let adet = 0, yatan = 0, enKotu = null;
   const seri = new Map(), akis = [];
   for (let i = ilk; i <= durum.bit; i++) {
@@ -322,20 +417,46 @@ function hesapla(a) {
     seri.set(i, d);
     const o = d / yatan - 1;
     if (!enKotu || o < enKotu.oran) enKotu = { oran: o, i };
-    akis.push(gunTarih(i, a.gun[k]));
+    akis.push([gunTarih(i, a.gun[k]), -T]);
   }
   let sonFiyat, sonMs;
   if (durum.bit === SON) { sonFiyat = a.son.fiyat; sonMs = isoTarih(a.son.tarih); }
   else { const k = durum.bit + 1 - a.bas; sonFiyat = a.fiyat[k]; sonMs = gunTarih(durum.bit + 1, a.gun[k]); }
   const deger = adet * sonFiyat;
-  const oran = deger / yatan - 1;
-  const sure = (sonMs - akis[0]) / YIL_MS;
+  akis.push([sonMs, deger]);
+  const sure = (sonMs - akis[0][0]) / YIL_MS;
   return {
-    a, ilk, ay: durum.bit - ilk + 1, adet, yatan, deger, kar: deger - yatan, oran,
-    yillik: sure >= 1 ? irr(akis, T, sonMs, deger) : null,
-    enKotu, seri, sonMs,
+    a, T, ilk, ay: durum.bit - ilk + 1, adet, yatan, deger, kar: deger - yatan, oran: deger / yatan - 1,
+    yillik: sure >= 1 ? irr(akis) : null, enKotu, seri, sonMs, akis,
   };
 }
+
+function sepetHesapla(sonuclar) {
+  const ilk = Math.min(...sonuclar.map((s) => s.ilk));
+  let xSon;
+  if (durum.bit === SON) xSon = Math.max(durum.bit + 0.25, ...sonuclar.map((s) => tarihX(s.sonMs)));
+  else xSon = durum.bit + 1;
+  const noktalar = [];
+  let enKotu = null;
+  for (let i = ilk; i <= durum.bit; i++) {
+    let deger = 0, yatan = 0;
+    for (const s of sonuclar) if (i >= s.ilk) { deger += s.seri.get(i); yatan += s.T * (i - s.ilk + 1); }
+    noktalar.push({ x: i, i, deger, yatan });
+    const o = deger / yatan - 1;
+    if (!enKotu || o < enKotu.oran) enKotu = { oran: o, i };
+  }
+  const deger = sonuclar.reduce((t, s) => t + s.deger, 0);
+  const yatan = sonuclar.reduce((t, s) => t + s.yatan, 0);
+  noktalar.push({ x: xSon, son: true, deger, yatan, ms: Math.max(...sonuclar.map((s) => s.sonMs)) });
+  const akis = sonuclar.flatMap((s) => s.akis);
+  const ilkMs = Math.min(...akis.map((a) => a[0]));
+  const sure = (Math.max(...sonuclar.map((s) => s.sonMs)) - ilkMs) / YIL_MS;
+  return {
+    sonuclar, ilk, xSon, noktalar, deger, yatan, kar: deger - yatan, oran: deger / yatan - 1,
+    aylik: sonuclar.reduce((t, s) => t + s.T, 0), enKotu, yillik: sure >= 1 ? irr(akis) : null, aktif: null,
+  };
+}
+const degerAt = (s, n) => (n.son ? s.deger : s.seri.get(n.i));
 
 // ---------- Kontroller ----------
 function kontrolleriKur() {
@@ -345,8 +466,7 @@ function kontrolleriKur() {
     AYLAR.forEach((ad, k) => ay.add(new Option(ad, k + 1)));
     for (let y = Y0; y <= ySon; y++) yil.add(new Option(y, y));
     const degisti = () => {
-      const i = Math.min(SON, Math.max(0, ayIdx(+yil.value, +ay.value)));
-      durum[id] = i;
+      durum[id] = Math.min(SON, Math.max(0, ayIdx(+yil.value, +ay.value)));
       if (durum.bas > durum.bit) { if (id === 'bas') durum.bit = durum.bas; else durum.bas = durum.bit; }
       ciz();
     };
@@ -364,33 +484,81 @@ function kontrolleriKur() {
     hazir.appendChild(b);
   }
 
-  const vk = $('#varliklar');
+  $('#mod').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) modDegistir(b.dataset.m); });
+  $('#gorunum').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { durum.gorunum = b.dataset.g; ciz(); } });
+  $('#olcek').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b && !b.disabled) { durum.olcek = b.dataset.o; ciz(); } });
+
+  const toplam = $('#toplam');
+  toplam.addEventListener('input', () => {
+    const v = parseFloat(toplam.value);
+    if (v >= 0 && v <= UST) { durum.toplam = v; ciz(); }
+  });
+  satirlariKur();
+}
+
+// Varlık satırları: mod değişince yeniden kurulur; yazarken kutuların değerine dokunulmaz.
+function satirlariKur() {
+  const kap = $('#satirlar');
+  kap.textContent = '';
+  const dagilim = durum.mod === 'dagilim';
+  $('#toplam-alan').hidden = !dagilim;
+  $('#toplam').value = durum.toplam;
   for (const a of V.varliklar) {
-    const b = el('button');
-    b.type = 'button';
-    b.dataset.id = a.id;
-    const anahtar = el('span', 'anahtar');
-    anahtar.style.background = 'var(--s-' + a.id + ')';
-    b.append(anahtar, el('span', 'ad', a.ad + ' (' + a.kod + ')'));
-    b.addEventListener('click', () => {
-      if (durum.secili.has(a.id)) { if (durum.secili.size > 1) durum.secili.delete(a.id); }
-      else durum.secili.add(a.id);
+    const s = el('div', 'satir');
+    s.dataset.id = a.id;
+    const ad = el('label', 'ad');
+    const inputId = 'v-' + a.id;
+    ad.htmlFor = inputId;
+    const anahtar = el('i');
+    anahtar.style.background = renk(a.id);
+    ad.append(anahtar, el('span', null, a.ad), el('small', null, a.kod));
+    const kutu = el('div', 'kutu');
+    const inp = el('input');
+    Object.assign(inp, { id: inputId, type: 'number', min: 0, step: 'any', inputMode: 'decimal' });
+    inp.max = dagilim ? 100 : UST;
+    inp.value = dagilim ? yuvarla(durum.oran[a.id] || 0, 1) : (durum.ayri[a.id] || 0);
+    if (dagilim) kutu.append(el('span', null, '%'), inp);
+    else kutu.append(el('span', null, '$'), inp);
+    inp.addEventListener('input', () => {
+      const v = inp.value === '' ? 0 : parseFloat(inp.value);
+      if (!(v >= 0)) return;
+      if (dagilim) { if (v <= 100) durum.oran[a.id] = v; }
+      else if (v <= UST) durum.ayri[a.id] = v;
       ciz();
     });
-    vk.appendChild(b);
+    s.append(ad, kutu, el('span', 'ek'));
+    kap.appendChild(s);
   }
+}
 
-  $('#olcek').addEventListener('click', (e) => {
-    const b = e.target.closest('button');
-    if (b) { durum.olcek = b.dataset.o; ciz(); }
-  });
-
-  const tutar = $('#tutar');
-  tutar.value = durum.tutar;
-  tutar.addEventListener('input', () => {
-    const v = parseFloat(tutar.value.replace(',', '.'));
-    if (v > 0 && v <= 1e6) { durum.tutar = v; ciz(); }
-  });
+function satirlariGuncelle() {
+  const dagilim = durum.mod === 'dagilim';
+  const aylik = V.varliklar.reduce((t, a) => t + tutar(a.id), 0);
+  for (const s of $$('#satirlar .satir')) {
+    const T = tutar(s.dataset.id);
+    s.classList.toggle('sifir', !(T > 0));
+    s.querySelector('.ek').textContent = dagilim ? para(T) : (aylik > 0 ? fPay.format(T / aylik) : '');
+  }
+  const alt = $('#satir-alt');
+  alt.textContent = '';
+  if (dagilim) {
+    const t = oranToplam();
+    const sol = el('span');
+    if (Math.abs(t - 100) < 0.05) sol.append('Paylar toplamı ', el('b', null, '%100'), ' · her ay ', el('b', null, para(aylik)));
+    else if (t > 0) sol.append(el('span', 'uyar', 'Payların toplamı %' + sayi(t, 1) + '.'), ' Aylık ', el('b', null, para(durum.toplam)), ' bu payların oranıyla bölüştürülüyor; her varlığa düşen tutar yanında.');
+    else sol.append(el('span', 'uyar', 'En az bir varlığa pay girin.'));
+    const esit = el('button', 'duz-dugme', 'Eşit dağıt');
+    esit.type = 'button';
+    esit.addEventListener('click', () => {
+      const secili = V.varliklar.filter((a) => (durum.oran[a.id] || 0) > 0).map((a) => a.id);
+      durum.oran = esitPay(secili.length ? secili : V.varliklar.map((a) => a.id));
+      satirlariKur();
+      ciz();
+    });
+    alt.append(sol, esit);
+  } else {
+    alt.append(el('span', null, 'Her ay toplam '), el('b', null, para(aylik)));
+  }
 }
 
 function kontrolleriGuncelle() {
@@ -399,80 +567,107 @@ function kontrolleriGuncelle() {
     $('#' + id + '-ay').value = m;
     $('#' + id + '-yil').value = y;
   }
-  for (const b of document.querySelectorAll('#hazir button')) {
+  for (const b of $$('#hazir button')) {
     const n = +b.dataset.yil;
     b.setAttribute('aria-pressed', durum.bit === SON && durum.bas === Math.max(0, SON - 12 * n + 1));
   }
-  for (const b of document.querySelectorAll('#varliklar button')) b.setAttribute('aria-pressed', durum.secili.has(b.dataset.id));
-  for (const b of document.querySelectorAll('#olcek button')) b.setAttribute('aria-pressed', durum.olcek === b.dataset.o);
+  for (const b of $$('#mod button')) b.setAttribute('aria-pressed', durum.mod === b.dataset.m);
+  for (const b of $$('#gorunum button')) b.setAttribute('aria-pressed', durum.gorunum === b.dataset.g);
+  const sepetG = durum.gorunum === 'sepet';
+  for (const b of $$('#olcek button')) {
+    b.disabled = sepetG;
+    b.setAttribute('aria-pressed', !sepetG && durum.olcek === b.dataset.o);
+  }
+  $('#olcek').hidden = sepetG;
+  $('#grafik-baslik').textContent = sepetG ? 'Sepetin değeri' : 'Varlıkların değeri';
+  satirlariGuncelle();
 }
 
-// Adres çubuğu: hesap paylaşılabilsin (?tutar=100&bas=2016-12&bit=2026-11&varlik=voo,qqq&olcek=log)
+// Adres çubuğu: hesap paylaşılabilsin
+// ?mod=dagilim&toplam=500&dagilim=voo:40,qqq:20 | ?mod=ayri&tutar=voo:100,altin:50 | &bas=2016-12&bit=2026-11&gorunum=varliklar&olcek=log
 function urlOku() {
   const p = new URLSearchParams(location.search);
   const ay = (s) => { const m = /^(\d{4})-(\d{2})$/.exec(s || ''); return m ? Math.min(SON, Math.max(0, ayIdx(+m[1], +m[2]))) : null; };
-  const t = parseFloat(p.get('tutar'));
-  if (t > 0 && t <= 1e6) durum.tutar = t;
+  const cift = (s) => {
+    const o = {};
+    for (const parca of (s || '').split(',')) {
+      const [id, v] = parca.split(':');
+      if (V.varliklar.some((a) => a.id === id) && parseFloat(v) >= 0) o[id] = parseFloat(v);
+    }
+    return o;
+  };
+  const sifirla = (o) => { const r = {}; for (const a of V.varliklar) r[a.id] = o[a.id] || 0; return r; };
+  const tutarP = p.get('tutar');
+  if (p.get('mod') === 'ayri' || (tutarP && !p.get('mod'))) {
+    durum.mod = 'ayri';
+    if (tutarP && tutarP.includes(':')) durum.ayri = sifirla(cift(tutarP));
+    else if (parseFloat(tutarP) > 0) {
+      // eski biçim: ?tutar=100&varlik=voo,qqq
+      const ids = (p.get('varlik') || '').split(',').filter((id) => V.varliklar.some((a) => a.id === id));
+      for (const a of V.varliklar) durum.ayri[a.id] = !ids.length || ids.includes(a.id) ? Math.min(UST, parseFloat(tutarP)) : 0;
+    }
+  } else if (p.get('mod') === 'dagilim') {
+    const t = parseFloat(p.get('toplam'));
+    if (t >= 0 && t <= UST) durum.toplam = t;
+    const o = cift(p.get('dagilim'));
+    if (Object.keys(o).length) durum.oran = sifirla(o);
+  }
   const b = ay(p.get('bas')), e = ay(p.get('bit'));
   if (b != null) durum.bas = b;
   if (e != null) durum.bit = e;
   if (durum.bas > durum.bit) durum.bas = durum.bit;
-  const ids = (p.get('varlik') || '').split(',').filter((id) => V.varliklar.some((a) => a.id === id));
-  if (ids.length) durum.secili = new Set(ids);
+  if (p.get('gorunum') === 'varliklar') durum.gorunum = 'varliklar';
   if (p.get('olcek') === 'log') durum.olcek = 'log';
 }
 function urlYaz() {
   const ym = (i) => { const [y, m] = ayYM(i); return y + '-' + String(m).padStart(2, '0'); };
+  const cift = (o) => V.varliklar.filter((a) => o[a.id] > 0).map((a) => a.id + ':' + yuvarla(o[a.id], 2)).join(',');
   const p = new URLSearchParams();
-  p.set('tutar', durum.tutar);
+  p.set('mod', durum.mod);
+  if (durum.mod === 'dagilim') { p.set('toplam', durum.toplam); p.set('dagilim', cift(durum.oran)); }
+  else p.set('tutar', cift(durum.ayri));
   p.set('bas', ym(durum.bas));
   p.set('bit', ym(durum.bit));
-  if (durum.secili.size < V.varliklar.length) p.set('varlik', V.varliklar.filter((a) => durum.secili.has(a.id)).map((a) => a.id).join(','));
-  if (durum.olcek === 'log') p.set('olcek', 'log');
-  try { history.replaceState(null, '', '?' + p.toString()); } catch (e) { /* yerel dosyada olmayabilir */ }
+  if (durum.gorunum === 'varliklar') p.set('gorunum', 'varliklar');
+  if (durum.gorunum === 'varliklar' && durum.olcek === 'log') p.set('olcek', 'log');
+  try { history.replaceState(null, '', '?' + p.toString().replace(/%3A/g, ':').replace(/%2C/g, ',')); } catch (e) { /* yerel dosya */ }
 }
 
 // ---------- Çizim ----------
 function ciz() {
   kontrolleriGuncelle();
-  const hepsi = V.varliklar.filter((a) => durum.secili.has(a.id)).map(hesapla);
-  const var_ = hepsi.filter((s) => !s.yok);
-  ozetYaz(var_);
-  grafikDurum = var_.length ? grafikVerisi(var_) : null;
+  const secili = V.varliklar.filter((a) => tutar(a.id) > 0);
+  const hepsi = secili.map(hesapla);
+  const var_ = hepsi.filter((s) => !s.yok).sort(yiginSira);
+  const oncekiAktif = G ? G.aktif : null;
+  G = var_.length ? sepetHesapla(var_) : null;
+  if (G && oncekiAktif != null && oncekiAktif < G.noktalar.length) G.aktif = oncekiAktif;
+  ozetYaz();
   grafikCiz();
+  sepetYaz();
   sonuclariYaz(hepsi);
   tabloYaz();
   urlYaz();
 }
 
-function ozetYaz(sonuclar) {
+function ozetYaz() {
   const oz = $('#ozet');
   oz.textContent = '';
-  if (!sonuclar.length) { oz.textContent = 'Seçilen varlıklar için bu dönemde veri yok.'; return; }
-  const ilk = Math.min(...sonuclar.map((s) => s.ilk));
-  const n = durum.bit - ilk + 1;
+  if (!G) { oz.textContent = 'Seçilen tutarlarla bu dönemde hesaplanacak bir alım yok. En az bir varlığa tutar ya da pay girin.'; return; }
+  const n = durum.bit - G.ilk + 1;
   const degerleme = durum.bit === SON
     ? 'Değerler ' + tarihMetin(isoTarih(V.guncelleme)) + ' itibarıyla son kapanış fiyatlarıyla.'
     : 'Değerler dönemin sonundaki, yani ' + ayEtiket(durum.bit + 1) + ' başındaki fiyatlarla.';
   oz.append(
-    ayEtiket(ilk) + ' – ' + ayEtiket(durum.bit) + ' arasında her ay ',
-    el('b', null, para(durum.tutar)),
-    ': ' + n + ' ay, toplam ',
-    el('b', null, para(durum.tutar * n)),
-    '. ' + degerleme,
+    ayEtiket(G.ilk) + ' – ' + ayEtiket(durum.bit) + ' arasında her ay ',
+    el('b', null, para(G.aylik)),
+    ', ' + n + ' ay boyunca: toplam ',
+    el('b', null, para(G.yatan)),
+    ' yatırılıyor. ',
   );
-}
-
-function grafikVerisi(sonuclar) {
-  const ilk = Math.min(...sonuclar.map((s) => s.ilk));
-  let xSon;
-  if (durum.bit === SON) xSon = Math.max(durum.bit + 0.25, ...sonuclar.map((s) => tarihX(s.sonMs)));
-  else xSon = durum.bit + 1;
-  const noktalar = [];
-  for (let i = ilk; i <= durum.bit; i++) noktalar.push({ x: i, i, yatan: durum.tutar * (i - ilk + 1) });
-  noktalar.push({ x: xSon, son: true, yatan: durum.tutar * (durum.bit - ilk + 1), ms: Math.max(...sonuclar.map((s) => s.sonMs)) });
-  const deger = (s, n) => (n.son ? s.deger : s.seri.get(n.i));
-  return { sonuclar, ilk, xSon, noktalar, deger, aktif: null };
+  const gec = G.sonuclar.filter((s) => s.ilk > G.ilk);
+  if (gec.length) oz.append(gec.map((s) => s.a.ad + "'in payı " + ayEtiket(s.a.bas) + "'e kadar yatırılmadı, çünkü verisi o ay başlıyor. ").join(''));
+  oz.append(degerleme);
 }
 
 function niceAdim(ham) {
@@ -481,32 +676,47 @@ function niceAdim(ham) {
   return (k <= 1 ? 1 : k <= 2 ? 2 : k <= 2.5 ? 2.5 : k <= 5 ? 5 : 10) * us;
 }
 
+// Uç etiketleri üst üste binmesin: sırala, aşağı it, taşarsa yukarı al
+function yerlestir(etk, ust, alt, aralik) {
+  etk.sort((a, b) => a.y - b.y);
+  etk.forEach((e, k) => { e.ty = k ? Math.max(e.y, etk[k - 1].ty + aralik) : Math.max(e.y, ust); });
+  for (let k = etk.length - 1; k >= 0; k--) {
+    const sinir = k === etk.length - 1 ? alt : etk[k + 1].ty - aralik;
+    if (etk[k].ty > sinir) etk[k].ty = sinir;
+  }
+}
+
 function grafikCiz() {
   const kap = $('#grafik');
   const ipucu = $('#ipucu');
   kap.querySelector('svg')?.remove();
   ipucu.hidden = true;
-  const G = grafikDurum;
   $('#grafik-not').textContent = '';
   if (!G) return;
 
+  const sepetG = durum.gorunum === 'sepet';
+  const sira = G.sonuclar; // YIGIN sırası: alttan üste
   const W = kap.clientWidth;
   const dar = W < 560;
   const H = dar ? 300 : 380;
   const m = { l: dar ? 50 : 62, r: dar ? 14 : 128, t: 14, b: 30 };
   const iw = W - m.l - m.r, ih = H - m.t - m.b;
-  const log = durum.olcek === 'log';
+  const log = !sepetG && durum.olcek === 'log';
+  const hepsiEsit = sira.every((s) => s.T === sira[0].T);
+  const yatanGoster = sepetG || hepsiEsit;
+  const yatanAt = (n) => (sepetG ? n.yatan : sira[0].T * ((n.son ? durum.bit : n.i) - G.ilk + 1));
 
   let enAz = Infinity, enCok = 0;
   for (const n of G.noktalar) {
-    enAz = Math.min(enAz, n.yatan); enCok = Math.max(enCok, n.yatan);
-    for (const s of G.sonuclar) { const d = G.deger(s, n); if (d != null) { enAz = Math.min(enAz, d); enCok = Math.max(enCok, d); } }
+    if (sepetG) { enCok = Math.max(enCok, n.deger, n.yatan); continue; }
+    if (yatanGoster) { enAz = Math.min(enAz, yatanAt(n)); enCok = Math.max(enCok, yatanAt(n)); }
+    for (const s of sira) { const d = degerAt(s, n); if (d != null) { enAz = Math.min(enAz, d); enCok = Math.max(enCok, d); } }
   }
 
   let y, tikler;
   if (log) {
     const lo = enAz * 0.85, hi = enCok * 1.15;
-    const L = (v) => Math.log10(v);
+    const L = Math.log10;
     y = (v) => m.t + ih - (L(v) - L(lo)) / (L(hi) - L(lo)) * ih;
     const d0 = Math.floor(L(lo)), d1 = Math.ceil(L(hi));
     const carpan = d1 - d0 <= 2 ? [1, 2, 5] : d1 - d0 <= 4 ? [1, 3] : [1];
@@ -522,9 +732,8 @@ function grafikCiz() {
   const x = (v) => m.l + (v - G.ilk) / (G.xSon - G.ilk) * iw;
 
   const svg = sv('svg', { width: W, height: H, viewBox: `0 0 ${W} ${H}`, tabindex: 0, role: 'img',
-    'aria-label': 'Seçilen varlıklarda düzenli alımın aylık değeri. Değerleri okumak için ok tuşlarını kullanın; aynı rakamlar aşağıdaki tabloda da var.' });
+    'aria-label': (sepetG ? 'Sepetin aylık değeri, varlıklar üst üste.' : 'Varlıkların aylık değeri.') + ' Değerleri okumak için ok tuşlarını kullanın; aynı rakamlar aşağıdaki tabloda da var.' });
 
-  // Izgara ve y ekseni
   for (const v of tikler) {
     const yy = Math.round(y(v)) + 0.5;
     sv('line', { x1: m.l, x2: W - m.r, y1: yy, y2: yy, class: v === 0 ? 'eksen-c' : 'izgara-c' }, svg);
@@ -536,61 +745,79 @@ function grafikCiz() {
   // x ekseni: kısa dönemde çeyrekler, uzunda yıllar
   const aySayisi = durum.bit - G.ilk + 1;
   const sigan = Math.max(2, Math.floor(iw / (dar ? 56 : 72)));
-  const xt = [];
+  let xt = [];
   if (aySayisi <= 30) {
-    for (let i = G.ilk; i <= durum.bit; i++) if ((ayYM(i)[1] - 1) % 3 === 0) xt.push({ i, metin: KISA[ayYM(i)[1] - 1] + ' ' + String(ayYM(i)[0]).slice(2) });
+    for (let i = G.ilk; i <= durum.bit; i++) { const [yy, mm] = ayYM(i); if ((mm - 1) % 3 === 0) xt.push({ i, metin: KISA[mm - 1] + ' ' + String(yy).slice(2) }); }
   } else {
-    const yillar = [];
-    for (let i = G.ilk; i <= durum.bit; i++) if (ayYM(i)[1] === 1) yillar.push(i);
-    const atla = Math.ceil(yillar.length / sigan);
-    yillar.forEach((i, k) => { if (k % atla === 0) xt.push({ i, metin: String(ayYM(i)[0]) }); });
+    for (let i = G.ilk; i <= durum.bit; i++) if (ayYM(i)[1] === 1) xt.push({ i, metin: String(ayYM(i)[0]) });
   }
-  let ayrilir = xt;
-  if (xt.length > sigan) { const atla = Math.ceil(xt.length / sigan); ayrilir = xt.filter((_, k) => k % atla === 0); }
-  for (const t of ayrilir) {
+  if (xt.length > sigan) { const atla = Math.ceil(xt.length / sigan); xt = xt.filter((_, k) => k % atla === 0); }
+  for (const t of xt) {
     const xx = x(t.i);
     sv('line', { x1: xx, x2: xx, y1: m.t + ih, y2: m.t + ih + 5, class: 'eksen-c' }, svg);
     const e = sv('text', { x: xx, y: H - 8, 'text-anchor': 'middle' }, svg);
     e.textContent = t.metin;
   }
 
-  // Yatırılan (kesik çizgi) ve seriler
   const yol = (pts) => pts.map((p, k) => (k ? 'L' : 'M') + x(p[0]).toFixed(1) + ' ' + y(p[1]).toFixed(1)).join(' ');
-  sv('path', { d: yol(G.noktalar.map((n) => [n.x, n.yatan])), class: 'yatan' }, svg);
-  for (const s of G.sonuclar) {
-    const pts = [];
-    for (const n of G.noktalar) { const d = G.deger(s, n); if (d != null) pts.push([n.x, d]); }
-    const p = sv('path', { d: yol(pts), class: 'seri' }, svg);
-    p.style.stroke = 'var(--s-' + s.a.id + ')';
-  }
-
-  // Uç etiketleri (geniş ekranda): sırala, üst üste binmesin
   const son = G.noktalar[G.noktalar.length - 1];
-  if (!dar) {
-    const etk = G.sonuclar.map((s) => ({ ad: s.a.ad, y: y(s.deger), id: s.a.id }));
-    etk.push({ ad: 'Yatırılan', y: y(son.yatan), id: null });
-    etk.sort((a, b) => a.y - b.y);
-    for (let k = 1; k < etk.length; k++) etk[k].ty = Math.max(etk[k].y, (etk[k - 1].ty ?? etk[k - 1].y) + 16);
-    etk[0].ty = etk[0].y;
-    const tasma = etk[etk.length - 1].ty - (m.t + ih);
-    if (tasma > 0) for (const e of etk) e.ty -= tasma;
-    for (let k = etk.length - 2; k >= 0; k--) etk[k].ty = Math.min(etk[k].ty, etk[k + 1].ty - 16);
-    const xx = x(son.x);
-    for (const e of etk) {
-      if (e.id) {
-        const c = sv('circle', { cx: xx, cy: e.y, r: 4, class: 'nokta' }, svg);
-        c.style.fill = 'var(--s-' + e.id + ')';
+  const etk = [];
+
+  if (sepetG) {
+    // Yığılmış alanlar: alttan üste veri sırası
+    const alt = G.noktalar.map(() => 0);
+    for (const s of sira) {
+      const ust = G.noktalar.map((n, k) => alt[k] + (degerAt(s, n) || 0));
+      const ileri = G.noktalar.map((n, k) => [n.x, ust[k]]);
+      const geri = G.noktalar.map((n, k) => [n.x, alt[k]]).reverse();
+      const a = sv('path', { d: yol(ileri) + ' ' + yol(geri).replace(/^M/, 'L') + ' Z', class: 'alan-d' }, svg);
+      a.style.fill = renk(s.a.id);
+      sv('path', { d: yol(ileri), class: 'alan-kenar' }, svg);
+      const kSon = G.noktalar.length - 1;
+      if (!dar && ust[kSon] - alt[kSon] > 0) etk.push({ ad: s.a.ad, y: y((ust[kSon] + alt[kSon]) / 2) });
+      ust.forEach((v, k) => { alt[k] = v; });
+    }
+    sv('path', { d: yol(G.noktalar.map((n) => [n.x, n.yatan])), class: 'yatan' }, svg);
+    if (!dar) etk.push({ ad: 'Yatırılan', y: y(son.yatan) });
+  } else {
+    if (yatanGoster) sv('path', { d: yol(G.noktalar.map((n) => [n.x, yatanAt(n)])), class: 'yatan' }, svg);
+    for (const s of sira) {
+      const pts = [];
+      for (const n of G.noktalar) { const d = degerAt(s, n); if (d != null) pts.push([n.x, d]); }
+      const p = sv('path', { d: yol(pts), class: 'seri' }, svg);
+      p.style.stroke = renk(s.a.id);
+      if (!dar) {
+        const c = sv('circle', { cx: x(son.x), cy: y(s.deger), r: 4, class: 'nokta' }, svg);
+        c.style.fill = renk(s.a.id);
+        etk.push({ ad: s.a.ad, y: y(s.deger) });
       }
-      const t = sv('text', { x: xx + 10, y: e.ty + 4, class: 'uc-etiket' }, svg);
+    }
+    if (!dar && yatanGoster) etk.push({ ad: sira.length > 1 ? 'Yatırılan (her biri)' : 'Yatırılan', y: y(yatanAt(son)) });
+  }
+  if (etk.length) {
+    yerlestir(etk, m.t + 4, m.t + ih, 16);
+    for (const e of etk) {
+      const t = sv('text', { x: x(son.x) + 10, y: e.ty + 4, class: 'uc-etiket' }, svg);
       t.textContent = e.ad;
     }
   }
 
-  // İmleç
+  // İmleç ve ipucu
   const imlec = sv('line', { y1: m.t, y2: m.t + ih, class: 'imlec', visibility: 'hidden' }, svg);
   const noktaG = sv('g', { visibility: 'hidden' }, svg);
-  const noktalar = G.sonuclar.map((s) => { const c = sv('circle', { r: 4.5, class: 'nokta' }, noktaG); c.style.fill = 'var(--s-' + s.a.id + ')'; return c; });
+  const noktalar = (sepetG ? [{ id: null }] : sira.map((s) => ({ id: s.a.id }))).map((o) => {
+    const c = sv('circle', { r: 4.5, class: 'nokta' }, noktaG);
+    c.style.fill = o.id ? renk(o.id) : 'var(--ink)';
+    return c;
+  });
   sv('rect', { x: m.l, y: m.t, width: iw + (dar ? 0 : 12), height: ih, fill: 'transparent' }, svg);
+
+  const ipSatir = (cizgi, deger, ad, cls) => {
+    const s = el('div', 'ip-satir' + (cls ? ' ' + cls : ''));
+    s.append(cizgi, el('b', null, para(deger)), el('span', null, ad));
+    ipucu.appendChild(s);
+  };
+  const cizgi = (id) => { const c = el('span', 'ip-cizgi'); c.style.background = id ? renk(id) : 'var(--ink)'; return c; };
 
   function goster(k) {
     G.aktif = k;
@@ -598,27 +825,25 @@ function grafikCiz() {
     imlec.setAttribute('x1', xx); imlec.setAttribute('x2', xx);
     imlec.setAttribute('visibility', 'visible');
     noktaG.setAttribute('visibility', 'visible');
-    const satirlar = [];
-    G.sonuclar.forEach((s, j) => {
-      const d = G.deger(s, n);
-      const c = noktalar[j];
-      if (d == null) { c.setAttribute('visibility', 'hidden'); return; }
-      c.setAttribute('visibility', 'visible');
-      c.setAttribute('cx', xx); c.setAttribute('cy', y(d));
-      satirlar.push({ ad: s.a.ad, d, id: s.a.id });
-    });
-    satirlar.sort((a, b) => b.d - a.d);
     ipucu.textContent = '';
     ipucu.appendChild(el('div', 'ip-baslik', n.son ? tarihMetin(n.ms) + ' · dönem sonu' : ayEtiket(n.i) + ' alımından sonra'));
-    for (const r of satirlar) {
-      const s = el('div', 'ip-satir');
-      const c = el('span', 'ip-cizgi'); c.style.background = 'var(--s-' + r.id + ')';
-      s.append(c, el('b', null, para(r.d)), el('span', null, r.ad));
-      ipucu.appendChild(s);
+    if (sepetG) {
+      noktalar[0].setAttribute('cx', xx); noktalar[0].setAttribute('cy', y(n.deger));
+      ipSatir(cizgi(null), n.deger, 'Sepet', 'toplam');
+      [...sira].reverse().forEach((s) => { const d = degerAt(s, n); if (d != null) ipSatir(cizgi(s.a.id), d, s.a.ad); });
+      ipSatir(el('span', 'ip-cizgi kesik'), n.yatan, 'Yatırılan');
+    } else {
+      const satirlar = [];
+      sira.forEach((s, j) => {
+        const d = degerAt(s, n), c = noktalar[j];
+        if (d == null) { c.setAttribute('visibility', 'hidden'); return; }
+        c.setAttribute('visibility', 'visible');
+        c.setAttribute('cx', xx); c.setAttribute('cy', y(d));
+        satirlar.push({ s, d });
+      });
+      satirlar.sort((a, b) => b.d - a.d).forEach((r) => ipSatir(cizgi(r.s.a.id), r.d, r.s.a.ad));
+      if (yatanGoster) ipSatir(el('span', 'ip-cizgi kesik'), yatanAt(n), sira.length > 1 ? 'Yatırılan (her biri)' : 'Yatırılan');
     }
-    const s = el('div', 'ip-satir');
-    s.append(el('span', 'ip-cizgi kesik'), el('b', null, para(n.yatan)), el('span', null, 'Yatırılan'));
-    ipucu.appendChild(s);
     ipucu.hidden = false;
     const tw = ipucu.offsetWidth;
     let left = xx + 14;
@@ -642,12 +867,12 @@ function grafikCiz() {
   svg.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') gizle(); });
   svg.addEventListener('blur', gizle);
   svg.addEventListener('keydown', (e) => {
-    const son = G.noktalar.length - 1;
-    let k = G.aktif ?? son;
+    const sonK = G.noktalar.length - 1;
+    let k = G.aktif ?? sonK;
     if (e.key === 'ArrowLeft') k = Math.max(0, k - 1);
-    else if (e.key === 'ArrowRight') k = Math.min(son, k + 1);
+    else if (e.key === 'ArrowRight') k = Math.min(sonK, k + 1);
     else if (e.key === 'Home') k = 0;
-    else if (e.key === 'End') k = son;
+    else if (e.key === 'End') k = sonK;
     else if (e.key === 'Escape') { gizle(); return; }
     else return;
     e.preventDefault();
@@ -655,13 +880,59 @@ function grafikCiz() {
   });
 
   kap.insertBefore(svg, ipucu);
-  if (G.aktif != null && G.aktif < G.noktalar.length) goster(G.aktif);
+  if (G.aktif != null) goster(G.aktif);
 
-  // Bir seri ötekileri ezince ipucu ver
-  if (!log && G.sonuclar.length > 1) {
-    const d = G.sonuclar.map((s) => s.deger).sort((a, b) => b - a);
-    if (d[0] > 6 * d[1]) $('#grafik-not').textContent = 'Bir varlık ötekilerden çok daha fazla büyüdüğü için diğer çizgiler dipte kalıyor. Logaritmik ölçek, hepsini oransal olarak karşılaştırmayı kolaylaştırır.';
+  const not = $('#grafik-not');
+  if (!sepetG && !hepsiEsit) not.textContent = 'Varlıklara farklı tutar yatırıldığı için çizgilerin yüksekliği doğrudan karşılaştırılamaz; her birinin kazancı aşağıdaki kartlarda.';
+  else if (!sepetG && !log && sira.length > 1) {
+    const d = sira.map((s) => s.deger).sort((a, b) => b - a);
+    if (d[0] > 6 * d[1]) not.textContent = 'Bir varlık ötekilerden çok daha fazla büyüdüğü için diğer çizgiler dipte kalıyor. Logaritmik ölçek, hepsini oransal olarak karşılaştırmayı kolaylaştırır.';
   }
+}
+
+function bilgiListesi(satirlar) {
+  const dl = el('dl', 'bilgi');
+  for (const [dt, dd] of satirlar) dl.append(el('dt', null, dt), el('dd', null, dd));
+  return dl;
+}
+const enKotuMetin = (e) => (e.oran < 0 ? yuzde(e.oran) + ' · ' + ayEtiket(e.i, true) : 'zarara düşmedi');
+
+function sepetYaz() {
+  const kap = $('#sepet');
+  kap.textContent = '';
+  if (!G) { kap.appendChild(el('p', 'kucuk-not', 'Hesaplanacak alım yok.')); return; }
+  const sol = el('div');
+  sol.append(el('div', 'etk', 'Sepetin değeri'), el('div', 'deger', para(G.deger)),
+    el('div', 'kazanc ' + (G.kar >= 0 ? 'arti' : 'eksi'), f0s.format(G.kar) + ' · ' + yuzde(G.oran)));
+  sol.appendChild(bilgiListesi([
+    ['Toplam yatırılan', para(G.yatan)],
+    ['Her ay', para(G.aylik)],
+    ['Yıllık getiri', G.yillik == null ? '—' : yuzde(G.yillik)],
+    ['En kötü an', enKotuMetin(G.enKotu)],
+  ]));
+  const sag = el('div');
+  sag.appendChild(el('div', 'etk', 'Dönem sonunda dağılım'));
+  const bar = el('div', 'dagilim-bar');
+  const liste = el('div', 'dagilim-liste');
+  for (const s of G.sonuclar) {
+    const pay = s.deger / G.deger;
+    const parca = el('span');
+    parca.style.background = renk(s.a.id);
+    parca.style.flexGrow = pay;
+    parca.title = s.a.ad + ' ' + fPay.format(pay);
+    bar.appendChild(parca);
+  }
+  liste.append(el('span'), el('span', 'soluk', ''), el('span', 'soluk sag', 'Alımda'), el('span', 'soluk sag', 'Sonda'));
+  for (const s of [...G.sonuclar].sort((a, b) => b.deger - a.deger)) {
+    const i = el('i');
+    i.style.background = renk(s.a.id);
+    liste.append(i, el('span', null, s.a.ad), el('span', 'sag soluk', fPay.format(s.T / G.aylik)), el('b', 'sag', fPay.format(s.deger / G.deger)));
+  }
+  sag.append(bar, liste);
+  if (G.sonuclar.length > 1) sag.appendChild(el('p', 'kucuk-not', '"Alımda" her ayki alımın payı, "Sonda" dönem sonunda sepetteki payı. Yeniden dengeleme yapılmadığı için hızlı büyüyen varlığın payı artıyor.'));
+  const gec = G.sonuclar.filter((s) => s.ilk > G.ilk);
+  if (gec.length) sag.appendChild(el('p', 'kucuk-not', gec.map((s) => s.a.ad + ' verisi ' + ayEtiket(s.a.bas) + "'te başlıyor; ondan önceki aylarda bu varlığın payı yatırılmadı.").join(' ')));
+  kap.append(sol, sag);
 }
 
 function sonuclariYaz(hepsi) {
@@ -670,35 +941,31 @@ function sonuclariYaz(hepsi) {
   const sirali = [...hepsi].sort((a, b) => (b.yok ? -1 : b.deger) - (a.yok ? -1 : a.deger));
   for (const s of sirali) {
     const a = s.a;
-    const k = el('article', 'sonuc' + (s.yok ? ' bos' : ''));
-    k.style.setProperty('--renk', 'var(--s-' + a.id + ')');
+    const k = el('article', 'sonuc');
+    k.style.setProperty('--renk', renk(a.id));
     const bas = el('div', 'bas');
     bas.append(el('b', null, a.ad), el('span', null, a.kod));
     k.appendChild(bas);
     if (s.yok) {
-      k.appendChild(el('div', 'deger', 'Bu dönemde veri yok'));
-      k.appendChild(el('p', 'not', a.ad + ' verisi ' + ayEtiket(a.bas) + "'te başlıyor."));
+      k.appendChild(el('div', 'deger', '—'));
+      k.appendChild(el('p', 'not', 'Bu dönemde veri yok; ' + a.ad + ' verisi ' + ayEtiket(a.bas) + "'te başlıyor."));
       kap.appendChild(k);
       continue;
     }
     k.appendChild(el('div', 'deger', para(s.deger)));
     k.appendChild(el('div', 'kazanc ' + (s.kar >= 0 ? 'arti' : 'eksi'), f0s.format(s.kar) + ' · ' + yuzde(s.oran)));
-    const dl = el('dl');
-    const satir = (dt, dd) => dl.append(el('dt', null, dt), el('dd', null, dd));
-    satir('Yatırılan', para(s.yatan));
-    satir('Yıllık getiri', s.yillik == null ? '—' : yuzde(s.yillik));
-    if (a.birim === 'ons') {
-      satir('Biriken', sayi(s.adet * GRAM, 1) + ' gram');
-      satir('Ort. maliyet', para(s.yatan / s.adet) + ' / ons');
-    } else if (a.birim === 'BTC') {
-      satir('Biriken', sayi(s.adet, 4) + ' BTC');
-      satir('Ort. maliyet', para(s.yatan / s.adet) + ' / BTC');
-    } else {
-      satir('Biriken', sayi(s.adet, s.adet < 10 ? 3 : 1) + ' pay');
-      satir('Ort. maliyet', para(s.yatan / s.adet) + ' / pay');
-    }
-    satir('En kötü an', s.enKotu.oran < 0 ? yuzde(s.enKotu.oran) + ' · ' + ayEtiket(s.enKotu.i, true) : 'zarara düşmedi');
-    k.appendChild(dl);
+    const birim = a.birim === 'ons' ? 'ons' : a.birim === 'BTC' ? 'BTC' : 'pay';
+    const biriken = a.birim === 'ons' ? sayi(s.adet * GRAM, 1) + ' gram'
+      : a.birim === 'BTC' ? sayi(s.adet, 4) + ' BTC'
+      : sayi(s.adet, s.adet < 10 ? 3 : 1) + ' pay';
+    k.appendChild(bilgiListesi([
+      ['Her ay', para(s.T)],
+      ['Yatırılan', para(s.yatan)],
+      ['Yıllık getiri', s.yillik == null ? '—' : yuzde(s.yillik)],
+      ['Biriken', biriken],
+      ['Ort. maliyet', para(s.yatan / s.adet) + ' / ' + birim],
+      ['En kötü an', enKotuMetin(s.enKotu)],
+    ]));
     if (s.ilk > durum.bas) k.appendChild(el('p', 'not', a.ad + ' verisi ' + ayEtiket(a.bas) + "'te başlıyor; hesap bu aydan itibaren (" + s.ay + ' ay).'));
     kap.appendChild(k);
   }
@@ -707,18 +974,17 @@ function sonuclariYaz(hepsi) {
 function tabloYaz() {
   const t = $('#tablo');
   t.textContent = '';
-  const G = grafikDurum;
   if (!G) return;
   const thead = el('thead'), tr = el('tr');
-  tr.append(el('th', null, 'Tarih'), el('th', null, 'Yatırılan'));
+  tr.append(el('th', null, 'Tarih'), el('th', null, 'Yatırılan'), el('th', null, 'Sepet'));
   for (const s of G.sonuclar) tr.appendChild(el('th', null, s.a.ad));
   thead.appendChild(tr);
   const tbody = el('tbody');
   for (const n of G.noktalar) {
     if (!n.son && ayYM(n.i)[1] !== 12) continue;
     const r = el('tr');
-    r.append(el('td', null, n.son ? tarihMetin(n.ms) + ' (dönem sonu)' : ayEtiket(n.i)), el('td', null, para(n.yatan)));
-    for (const s of G.sonuclar) { const d = G.deger(s, n); r.appendChild(el('td', null, d == null ? '—' : para(d))); }
+    r.append(el('td', null, n.son ? tarihMetin(n.ms) + ' (dönem sonu)' : ayEtiket(n.i)), el('td', null, para(n.yatan)), el('td', null, para(n.deger)));
+    for (const s of G.sonuclar) { const d = degerAt(s, n); r.appendChild(el('td', null, d == null ? '—' : para(d))); }
     tbody.appendChild(r);
   }
   t.append(thead, tbody);
@@ -729,7 +995,12 @@ function baslat(veri) {
   V = veri;
   [Y0, M0] = V.ilk_ay.split('-').map(Number);
   SON = V.ay_sayisi - 1;
-  durum = { tutar: 100, bas: SON - 119, bit: SON, secili: new Set(V.varliklar.map((a) => a.id)), olcek: 'dogrusal' };
+  const yuz = {};
+  for (const a of V.varliklar) yuz[a.id] = 100;
+  durum = {
+    mod: 'dagilim', toplam: 600, oran: esitPay(V.varliklar.map((a) => a.id)), ayri: yuz,
+    bas: SON - 119, bit: SON, gorunum: 'sepet', olcek: 'dogrusal',
+  };
   urlOku();
   kontrolleriKur();
   $('#kaynak').textContent = 'Veri: Yahoo Finance, son güncelleme ' + tarihMetin(isoTarih(V.guncelleme)) + '.';
