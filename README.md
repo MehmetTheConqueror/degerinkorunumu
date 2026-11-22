@@ -23,12 +23,13 @@ git subtree push --prefix=site site main
 
 ## Cloudflare Pages
 
-Workers & Pages → Create → Pages → Connect to Git → `degerinkorunumu`.
-Framework preset `None`, Build command boş, Build output directory boş (kök).
-`main`'e her push siteyi günceller.
+Adres: https://degerinkorunumu.pages.dev/
 
-Alan adı belli olunca `index.html`'deki `og:image` değerini tam adrese çevir
-(ör. `https://degerinkorunumu.pages.dev/og.png`); bazı uygulamalar göreli yolu okumaz.
+Pages projesi `degerinkorunumu`, GitHub deposuna bağlı. Framework preset `None`, Build command boş,
+Build output directory boş (kök). `main`'e her push siteyi günceller.
+
+Adres değişirse (kendi alan adı bağlanırsa) `index.html`'deki `canonical`, `og:url` ve `og:image`
+değerlerini yeni adrese çevir; `og:image` tam adres olmalı, göreli yolu çoğu uygulama okumaz.
 
 ## Yeni sayfa
 
